@@ -1,0 +1,41 @@
+name: Leads diarios
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # 07:17 (invierno) / 08:17 (verano) hora peninsular
+  workflow_dispatch:
+    inputs:
+      ciudad:
+        description: "Ciudad (vacío = las de config.json)"
+        required: false
+      cantidad:
+        description: "Número de negocios"
+        required: false
+        default: "20"
+
+permissions:
+  contents: write
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generar lista
+        env:
+          CIUDAD: ${{ github.event.inputs.ciudad }}
+          CANTIDAD: ${{ github.event.inputs.cantidad || '20' }}
+        run: |
+          ARGS=(--cantidad "$CANTIDAD")
+          if [ -n "$CIUDAD" ]; then ARGS+=(--ciudad "$CIUDAD"); fi
+          python3 prospeccion/buscar_negocios.py "${ARGS[@]}"
+      - name: Guardar en el repositorio
+        run: |
+          git config user.name "leads-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add leads data
+          git diff --cached --quiet || git commit -m "Leads $(date +%F)"
+          git push

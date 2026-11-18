@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Negocios">
+<meta name="theme-color" content="#1b2a5e">
+<title>Negocios del día</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Banda superior con día, botón de búsqueda y cifras; filtros en una fila; rejilla de tarjetas (1 col móvil, 2 iPad, 3 escritorio). */
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --raise:#f5f7fb; --ink:#141b2d; --muted:#5d6577; --line:#dde2ec;
+  --accent:#2b4fd8; --accent-ink:#ffffff; --wa:#17a556; --wa-ink:#ffffff;
+  --band1:#1b2a5e; --band2:#2b4fd8; --band-ink:#ffffff;
+  --ok:#17a556; --warn:#c77800; --bad:#c23b3b;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --g-hosteleria:#d4502a; --g-alimentacion:#b98500; --g-belleza:#c2337e; --g-comercio:#2b6cb0;
+  --g-oficios:#4d7c0f; --g-salud:#0f8f84; --g-servicios:#6b46c1;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0d111b; --surface:#161c2a; --raise:#1d2436; --ink:#eef1f8; --muted:#9aa3b8; --line:#2a3247;
+  --accent:#8ea6ff; --accent-ink:#0d111b; --wa:#2fc671; --wa-ink:#06200f;
+  --band1:#111a3d; --band2:#24399c;
+  --ok:#43d17f; --warn:#f0a73a; --bad:#f07070;
+  --g-hosteleria:#ff8a65; --g-alimentacion:#f2c14e; --g-belleza:#f07cc4; --g-comercio:#7fb0e6;
+  --g-oficios:#a9cf5a; --g-salud:#4fd1c1; --g-servicios:#b39cf0; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band{background:linear-gradient(135deg,var(--band1),var(--band2));color:var(--band-ink);padding-top:env(safe-area-inset-top,0px)}
+.band .wrap{padding-block:26px 72px}
+.eyebrow{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,6vw,3.4rem);line-height:1;margin:.2em 0 .25em;text-wrap:balance;letter-spacing:-.02em}
+.sub{margin:0;opacity:.88;max-width:62ch}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;align-items:center}
+.buscar{border:0;background:#fff;color:var(--band1);font:700 1rem var(--body);border-radius:14px;padding:13px 20px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.buscar[disabled]{opacity:.7;cursor:progress}
+.sec{border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font:500 .9rem var(--body);border-radius:12px;padding:11px 14px;cursor:pointer}
+select.sec option{color:#141b2d}
+.estado-busq{font-size:.9rem;opacity:.9;margin-top:10px;min-height:1.4em}
+.dias{display:flex;gap:8px;margin-top:14px;overflow-x:auto;scrollbar-width:none}
+.dias::-webkit-scrollbar{display:none}
+.dia{flex:none;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:999px;padding:6px 13px;font:500 .85rem var(--body);cursor:pointer}
+.dia[aria-pressed="true"]{background:#fff;color:var(--band1)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:-48px}
+.st{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:0 6px 20px rgba(20,27,45,.08)}
+.st b{display:block;font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.st span{color:var(--muted);font-size:.8rem}
+.bar{height:6px;background:var(--raise);border-radius:9px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.filtros{display:flex;gap:8px;overflow-x:auto;padding:18px 0 4px;scrollbar-width:none}
+.filtros::-webkit-scrollbar{display:none}
+.f{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font:500 .86rem var(--body);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.f .dot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted))}
+.f small{color:var(--muted)}
+.f[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.f[aria-pressed="true"] small{color:inherit;opacity:.7}
+.sep{flex:none;width:1px;background:var(--line);margin:4px 2px}
+.aviso{font-size:.85rem;color:var(--muted);margin:10px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px;padding-block:14px 32px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card[data-estado="no_interesa"]{opacity:.55}
+.head{display:flex;gap:12px;align-items:flex-start}
+.mono{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font:800 1.15rem var(--display);color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.who{min-width:0;flex:1}
+.cat{color:var(--c);font-weight:600;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase}
+h2{font-family:var(--display);font-weight:600;font-size:1.3rem;line-height:1.15;margin:2px 0 0;overflow-wrap:anywhere;text-wrap:balance}
+.num{color:var(--muted);font-size:.78rem;font-variant-numeric:tabular-nums}
+.datos{display:grid;gap:2px;font-size:.92rem;color:var(--muted)}
+.datos strong{color:var(--ink);font-weight:600}
+.tel{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tel a{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none}
+.pill{font-size:.72rem;border:1px solid var(--line);border-radius:6px;padding:0 6px;color:var(--muted);font-style:normal}
+.wa{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--wa);color:var(--wa-ink);text-decoration:none;font-weight:600;border-radius:14px;padding:13px;font-size:1rem}
+.wa svg{width:20px;height:20px;fill:currentColor}
+.wa.fijo{background:var(--ink);color:var(--bg)}
+.links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.links a{text-align:center;text-decoration:none;color:var(--ink);background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:9px 4px;font-size:.84rem;font-weight:500}
+a:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+details{border-top:1px solid var(--line)}
+summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:10px 2px;cursor:pointer;font-weight:500;font-size:.93rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--muted);font-size:1.2rem;line-height:1}
+details[open] summary::after{content:"–"}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13.5px/1.5 var(--body);background:var(--raise);border:1px solid var(--line);padding:12px;border-radius:12px;margin:0 0 8px;max-height:300px;overflow:auto}
+.copy{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:8px 14px;font:600 .86rem var(--body);cursor:pointer;margin-bottom:10px}
+.estado{display:flex;flex-wrap:wrap;gap:4px;background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:4px}
+.estado button{flex:1 1 auto;white-space:nowrap;border:0;background:transparent;color:var(--muted);border-radius:9px;padding:7px 8px;font:500 .78rem var(--body);cursor:pointer}
+.estado button[aria-pressed="true"]{background:var(--surface);color:var(--sc);box-shadow:0 1px 3px rgba(20,27,45,.15);font-weight:600}
+.vacio{grid-column:1/-1;background:var(--surface);border:1px dashed var(--line);border-radius:20px;padding:32px 20px;text-align:center;color:var(--muted)}
+.vacio h3{font-family:var(--display);color:var(--ink);font-size:1.3rem;margin:0 0 6px}
+.nota{font-size:.82rem;color:var(--muted);text-align:center;padding-block:0 28px;max-width:70ch;margin:0 auto}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:g 0.8s linear infinite;display:none}
+.buscar[disabled] .spin{display:inline-block}
+@keyframes g{to{transform:rotate(360deg)}}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <div class="eyebrow" id="fechaTxt"></div>
+  <h1 id="titulo">Negocios del día</h1>
+  <p class="sub" id="subTxt">Pulsa el botón y la app busca 20 negocios sin página web, con el mensaje de WhatsApp ya escrito y el prompt para crear su web.</p>
+  <div class="acciones">
+    <button class="buscar" id="btnBuscar" type="button"><span class="spin" aria-hidden="true"></span><span id="btnTxt">Buscar negocios de hoy</span></button>
+    <select class="sec" id="selCiudad" aria-label="Zona de búsqueda"></select>
+  </div>
+  <div class="estado-busq" id="estadoBusq" role="status" aria-live="polite"></div>
+  <nav class="dias" id="dias" aria-label="Listas anteriores"></nav>
+</div></header>
+
+<main class="wrap">
+  <section class="stats" aria-label="Resumen">
+    <div class="st"><b id="sTotal">0</b><span>negocios</span></div>
+    <div class="st"><b id="sWa">0</b><span>con WhatsApp</span></div>
+    <div class="st"><b id="sHechos">0</b><span>contactados</span><div class="bar"><i id="prog"></i></div></div>
+    <div class="st"><b id="sInt">0</b><span>interesados</span></div>
+  </section>
+  <nav class="filtros" id="filtros" aria-label="Filtrar"></nav>
+  <p class="aviso">Antes de escribir, abre «¿Tiene web?» para comprobarlo. Un solo mensaje por negocio; si no contesta, no insistas.</p>
+  <section class="grid" id="grid"></section>
+  <p class="nota">En el iPad: botón Compartir de Safari → «Añadir a pantalla de inicio». Las listas y los estados se guardan en este dispositivo. Datos © colaboradores de OpenStreetMap (ODbL); un negocio sin web en el mapa puede tenerla en realidad: compruébalo siempre.</p>
+</main>
+
+<script>
+const D = /*__DATOS__*/null;
+const SERVIDORES = ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+const ESTADOS=[["pendiente","Pendiente","var(--muted)"],["contactado","Escrito","var(--accent)"],["interesado","Interesa","var(--warn)"],["no_interesa","No","var(--bad)"],["cliente","Cliente","var(--ok)"]];
+const NOMBRE_GRUPO={hosteleria:"Hostelería",alimentacion:"Alimentación",belleza:"Belleza",comercio:"Comercio",oficios:"Oficios",salud:"Salud",servicios:"Servicios"};
+const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"],MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const WA_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg>';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const q=s=>encodeURIComponent(s);
+
+/* ---------- almacenamiento local ---------- */
+function leer(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
+function guardar(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let listas=leer("nd_listas",{});          // {fecha: [lead,...]}
+let historial=new Set(leer("nd_historial",[])); // ids OSM ya entregados
+let diaSel=null, filtro="todos";
+
+/* ---------- fechas ---------- */
+const hoyISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+const ordinal=f=>{const [y,m,d]=f.split("-").map(Number);return Date.UTC(y,m-1,d)/86400000+719163};
+const fechaLarga=f=>{const d=new Date(f+"T12:00:00");return `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`};
+function ciudadesDeHoy(f){const t=D.config.ciudades,n=Math.min(D.config.ciudades_por_dia||3,t.length),i=(ordinal(f)*n)%t.length;return Array.from({length:n},(_,k)=>t[(i+k)%t.length])}
+
+/* ---------- Overpass ---------- */
+function consulta(ciudad){
+  const porClave={};D.categorias.forEach(([k,v])=>(porClave[k]=porClave[k]||[]).push(v));
+  const sinWeb='[!"website"][!"contact:website"][!"url"][!"brand"]';
+  const bloques=Object.entries(porClave).map(([k,vs])=>`  nwr(area.a)["${k}"~"^(${[...new Set(vs)].sort().join("|")})$"]["name"]${sinWeb};`).join("\n");
+  return `[out:json][timeout:120];\narea["name"="${ciudad.replace(/"/g,'\\"')}"]["boundary"="administrative"]["admin_level"="${D.config.admin_level||"8"}"]->.a;\n(\n${bloques}\n);\nout center tags;`;
+}
+async function descargar(ciudad){
+  let ultimo;
+  for(const url of SERVIDORES){
+    try{
+      const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),150000);
+      const r=await fetch(url,{method:"POST",body:new URLSearchParams({data:consulta(ciudad)}),signal:ctl.signal});
+      clearTimeout(t);
+      if(!r.ok)throw new Error("HTTP "+r.status);
+      return await r.json();
+    }catch(e){ultimo=e}
+  }
+  throw ultimo||new Error("sin respuesta");
+}
+
+/* ---------- tratamiento (equivalente a buscar_negocios.py) ---------- */
+function telefonos(tags){
+  const crudos=[];["contact:mobile","mobile","phone","contact:phone","contact:whatsapp"].forEach(k=>{if(tags[k])crudos.push(...tags[k].split(/[;,/]/))});
+  const res=[];
+  for(const t of crudos){let d=t.replace(/\D/g,"");if(d.startsWith("0034"))d=d.slice(4);else if(d.startsWith("34")&&d.length===11)d=d.slice(2);
+    if(d.length===9&&"6789".includes(d[0])&&!res.includes(d))res.push(d)}
+  return res.sort((a,b)=>("67".includes(a[0])?0:1)-("67".includes(b[0])?0:1));
+}
+const fmtTel=t=>`+34 ${t.slice(0,3)} ${t.slice(3,6)} ${t.slice(6)}`;
+function direccion(t){const p=[`${t["addr:street"]||""} ${t["addr:housenumber"]||""}`.trim(),`${t["addr:postcode"]||""} ${t["addr:city"]||""}`.trim()].filter(Boolean);return p.join(", ")||"(sin dirección en el mapa)"}
+function instagram(t){let v=t["contact:instagram"]||t.instagram||"";if(!v)return"";v=v.trim().replace(/\/$/,"");return v.startsWith("http")?v:"https://www.instagram.com/"+v.replace(/^@/,"")}
+function categoria(t){for(const [k,v,nom,g] of D.categorias)if(t[k]===v)return[nom,g];return null}
+function extraer(osm,ciudad){
+  const out=[];
+  for(const el of osm.elements||[]){
+    const t=el.tags||{};const c=categoria(t);if(!c||!t.name)continue;
+    const tels=telefonos(t);if(!tels.length)continue;
+    out.push({id:`${el.type}/${el.id}`,nombre:t.name.trim(),categoria:c[0],grupo:c[1],ciudad,direccion:direccion(t),
+      telefono:tels[0],movil:"67".includes(tels[0][0]),instagram:instagram(t),horario:t.opening_hours||"",
+      lat:el.lat??el.center?.lat,lon:el.lon??el.center?.lon});
+  }
+  return out;
+}
+function barajar(a,semilla){let s=0;for(const ch of semilla)s=(s*31+ch.charCodeAt(0))>>>0;const r=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function seleccionar(negocios,cantidad,semilla){
+  const porCat={};negocios.filter(n=>!historial.has(n.id)).forEach(n=>(porCat[n.categoria]=porCat[n.categoria]||[]).push(n));
+  Object.values(porCat).forEach(l=>{barajar(l,semilla);l.sort((a,b)=>(b.movil?1:0)-(a.movil?1:0))});
+  const orden=barajar(Object.keys(porCat),semilla+"o"),sel=[],max=D.config.max_por_categoria||3;
+  for(let r=0;r<max&&sel.length<cantidad;r++)for(const c of orden)if(porCat[c].length>r&&sel.length<cantidad)sel.push(porCat[c][r]);
+  return sel;
+}
+function msgWA(n){const r=D.config.remitente,g=D.grupos[n.grupo];return `Hola, buenos días. Soy ${r.nombre}${r.marca?", de "+r.marca:""}; hago páginas web para negocios de ${n.ciudad}. He visto ${n.nombre} en el mapa y no he encontrado su web. Le escribo por si le interesa tener una sencilla y profesional para ${g.gancho}. Si quiere, le preparo un boceto sin compromiso para que lo vea antes de decidir nada. Si no le interesa, dígamelo y no le vuelvo a escribir. Gracias y disculpe la molestia.`}
+function msgIG(n){const r=D.config.remitente;return `Hola, soy ${r.nombre}${r.marca?" ("+r.marca+")":""}. Hago webs para negocios de ${n.ciudad} y he visto que ${n.nombre} no tiene página web. ¿Le preparo un boceto gratuito y sin compromiso para que lo vea? Si no le interesa, no le escribo más. ¡Gracias!`}
+function promptWeb(n){const g=D.grupos[n.grupo],r=D.config.remitente;const v={NOMBRE:n.nombre,CATEGORIA:n.categoria,CIUDAD:n.ciudad,DIRECCION:n.direccion,TELEFONO:fmtTel(n.telefono),
+  WHATSAPP:n.movil?`https://wa.me/34${n.telefono}`:"(no consta móvil: usar botón de llamada)",HORARIO:n.horario||"(pendiente de confirmar con el cliente)",INSTAGRAM:n.instagram||"(no consta)",
+  SECCIONES:g.secciones,ESTILO:g.estilo,OBJETIVO:g.gancho,COORDENADAS:n.lat?`${n.lat},${n.lon}`:"(no constan)",MARCA:r.marca||r.nombre};
+  return D.plantilla.replace(/\{\{(\w+)\}\}/g,(m,k)=>v[k]??m)}
+function completar(n,i,fecha){return {...n,n:i+1,fecha,estado:"pendiente",msg_wa:msgWA(n),msg_ig:msgIG(n),prompt:promptWeb(n),
+  whatsapp:n.movil?`https://wa.me/34${n.telefono}?text=${q(msgWA(n))}`:"",
+  ig_url:n.instagram||`https://www.google.com/search?q=${q("site:instagram.com "+n.nombre+" "+n.ciudad)}`,
+  verificar:`https://www.google.com/search?q=${q(n.nombre+" "+n.ciudad)}`,
+  mapa:`https://www.google.com/maps/search/?api=1&query=${q(n.nombre+" "+n.direccion+" "+n.ciudad)}`}}
+
+/* ---------- búsqueda ---------- */
+async function buscar(){
+  const fecha=hoyISO(),zona=$("selCiudad").value;
+  const ciudades=zona==="auto"?ciudadesDeHoy(fecha):[zona];
+  const btn=$("btnBuscar");btn.disabled=true;$("btnTxt").textContent="Buscando…";
+  let negocios=[],fallos=[];
+  for(const c of ciudades){
+    $("estadoBusq").textContent=`Consultando el mapa de ${c}… (puede tardar hasta un minuto)`;
+    try{negocios.push(...extraer(await descargar(c),c))}catch(e){fallos.push(c)}
+  }
+  const cantidad=D.config.leads_por_dia||20;
+  let sel=seleccionar(negocios,cantidad,fecha+zona+(listas[fecha]?.length||0));
+  btn.disabled=false;$("btnTxt").textContent=listas[fecha]?"Buscar 20 más":"Buscar negocios de hoy";
+  if(!sel.length){$("estadoBusq").textContent=fallos.length===ciudades.length?"No se ha podido conectar con el mapa. Revisa la conexión a internet e inténtalo de nuevo en un rato.":"No quedan negocios nuevos en esa zona. Elige otra ciudad en el desplegable.";return}
+  const previos=listas[fecha]||[];
+  sel=sel.map((n,i)=>completar(n,previos.length+i,fecha));
+  listas[fecha]=previos.concat(sel);sel.forEach(n=>historial.add(n.id));
+  guardar("nd_listas",listas);guardar("nd_historial",[...historial]);
+  $("estadoBusq").textContent=`${sel.length} negocios nuevos en ${[...new Set(sel.map(n=>n.ciudad))].join(", ")}.`+(fallos.length?` No respondió: ${fallos.join(", ")}.`:"")+(sel.length<cantidad?" Para más, elige otra ciudad.":"");
+  diaSel=fecha;filtro="todos";render();
+}
+
+/* ---------- pintar ---------- */
+function vacio(t,p){$("grid").innerHTML=`<div class="vacio"><h3>${esc(t)}</h3><p>${esc(p)}</p></div>`}
+function render(){
+  const fechas=Object.keys(listas).filter(f=>listas[f].length).sort().reverse();
+  $("fechaTxt").textContent=fechaLarga(hoyISO());
+  $("btnTxt").textContent=listas[hoyISO()]?"Buscar 20 más":"Buscar negocios de hoy";
+  if(!fechas.length){["sTotal","sWa","sHechos","sInt"].forEach(i=>$(i).textContent="0");$("dias").innerHTML="";$("filtros").innerHTML="";
+    vacio("Todavía no hay negocios","Pulsa «Buscar negocios de hoy». Hoy toca: "+ciudadesDeHoy(hoyISO()).join(", ")+".");return}
+  if(!diaSel||!listas[diaSel])diaSel=fechas[0];
+  $("dias").innerHTML=fechas.length>1?fechas.slice(0,21).map(f=>{const d=new Date(f+"T12:00:00");return `<button class="dia" aria-pressed="${f===diaSel}" data-d="${f}">${f===hoyISO()?"Hoy":d.getDate()+" "+MESES[d.getMonth()].slice(0,3)}</button>`}).join(""):"";
+  const delDia=listas[diaSel];const ciudades=[...new Set(delDia.map(l=>l.ciudad))];
+  $("titulo").textContent=`${delDia.length} negocios sin web`;
+  $("subTxt").textContent=`${diaSel===hoyISO()?"Hoy":fechaLarga(diaSel)} en ${ciudades.join(", ")}. Cada tarjeta trae el mensaje listo para enviar y el prompt para crear su web.`;
+  const hechos=delDia.filter(l=>l.estado!=="pendiente").length;
+  $("sTotal").textContent=delDia.length;$("sWa").textContent=delDia.filter(l=>l.movil).length;$("sHechos").textContent=hechos;
+  $("sInt").textContent=delDia.filter(l=>l.estado==="interesado"||l.estado==="cliente").length;$("prog").style.width=(hechos/delDia.length*100)+"%";
+  const grupos=Object.keys(NOMBRE_GRUPO).filter(g=>delDia.some(l=>l.grupo===g));
+  const b=(k,label,n)=>`<button class="f" aria-pressed="${filtro===k}" data-f="${esc(k)}">${label} <small>${n}</small></button>`;
+  $("filtros").innerHTML=b("todos","Todos",delDia.length)+b("e:pendiente","Pendientes",delDia.filter(l=>l.estado==="pendiente").length)
+    +b("e:interesado","Interesados",delDia.filter(l=>l.estado==="interesado").length)+'<span class="sep"></span>'
+    +grupos.map(g=>b("g:"+g,`<span class="dot" style="--c:var(--g-${g})"></span>${NOMBRE_GRUPO[g]}`,delDia.filter(l=>l.grupo===g).length)).join("")
+    +(ciudades.length>1?'<span class="sep"></span>'+ciudades.map(c=>b("c:"+c,esc(c),delDia.filter(l=>l.ciudad===c).length)).join(""):"");
+  const vis=delDia.filter(l=>filtro==="todos"||(filtro.startsWith("g:")&&l.grupo===filtro.slice(2))||(filtro.startsWith("c:")&&l.ciudad===filtro.slice(2))||(filtro.startsWith("e:")&&l.estado===filtro.slice(2)));
+  if(!vis.length){vacio("Nada con este filtro","Pulsa «Todos» para ver la lista completa.");return}
+  $("grid").innerHTML=vis.map(card).join("");
+}
+function bloque(t,txt,id){return `<details><summary>${t}</summary><pre id="${id}">${esc(txt)}</pre><button class="copy" data-copy="${id}">Copiar</button></details>`}
+function card(l){
+  const k=l.id.replace(/\W/g,"_");
+  const wa=l.movil?`<a class="wa" href="${esc(l.whatsapp)}" target="_blank" rel="noopener">${WA_SVG}Abrir WhatsApp con el mensaje</a>`:`<a class="wa fijo" href="tel:+34${l.telefono}">Número fijo · Llamar</a>`;
+  return `<article class="card" data-estado="${l.estado}" style="--c:var(--g-${l.grupo})">
+  <div class="head"><div class="mono" aria-hidden="true">${esc(l.nombre.trim()[0].toUpperCase())}</div>
+    <div class="who"><div class="cat">${esc(l.categoria)}</div><h2>${esc(l.nombre)}</h2></div><span class="num">#${l.n}</span></div>
+  <div class="datos"><div>${esc(l.direccion)} · <strong>${esc(l.ciudad)}</strong></div>${l.horario?`<div>Horario: ${esc(l.horario)}</div>`:""}
+    <div class="tel"><a href="tel:+34${l.telefono}">${fmtTel(l.telefono)}</a><em class="pill">${l.movil?"móvil":"fijo"}</em></div></div>
+  ${wa}
+  <div class="links"><a href="${esc(l.verificar)}" target="_blank" rel="noopener">¿Tiene web?</a>
+    <a href="${esc(l.ig_url)}" target="_blank" rel="noopener">${l.instagram?"Instagram":"Buscar Instagram"}</a>
+    <a href="${esc(l.mapa)}" target="_blank" rel="noopener">Mapa</a></div>
+  ${bloque("Mensaje de WhatsApp",l.msg_wa,"wa-"+k)}${bloque("Mensaje de Instagram",l.msg_ig,"ig-"+k)}${bloque("Prompt para crear su web",l.prompt,"pr-"+k)}
+  <div class="estado" role="group" aria-label="Estado del contacto">${ESTADOS.map(([e,t,c])=>`<button data-id="${esc(l.id)}" data-e="${e}" aria-pressed="${l.estado===e}" style="--sc:${c}">${t}</button>`).join("")}</div>
+</article>`}
+function copiar(id,b){const el=$(id);if(!el)return;const o=b.textContent,ok=()=>{b.textContent="Copiado";setTimeout(()=>b.textContent=o,1400)};
+  const sel=()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand("copy");ok()}catch(e){}};
+  try{navigator.clipboard.writeText(el.innerText).then(ok,sel)}catch(e){sel()}}
+
+document.addEventListener("click",ev=>{const t=ev.target.closest("button");if(!t)return;
+  if(t.id==="btnBuscar")buscar();
+  else if(t.dataset.copy)copiar(t.dataset.copy,t);
+  else if(t.dataset.d){diaSel=t.dataset.d;filtro="todos";render()}
+  else if(t.dataset.f){filtro=t.dataset.f;render()}
+  else if(t.dataset.e){const l=listas[diaSel].find(x=>x.id===t.dataset.id);if(l){l.estado=t.dataset.e;guardar("nd_listas",listas);render()}}
+});
+$("selCiudad").innerHTML=`<option value="auto">Zona de hoy: ${esc(ciudadesDeHoy(hoyISO()).join(", "))}</option>`+D.config.ciudades.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+render();
+</script>
+</body>
+</html>
