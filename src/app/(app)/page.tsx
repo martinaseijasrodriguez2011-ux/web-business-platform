@@ -132,7 +132,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {cards.map((c) => <StatCard key={c.label} {...c} />)}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card>
           <CardHeader title="Necesita atención" subtitle="Lo más urgente primero." />
           <div className="divide-y divide-line">

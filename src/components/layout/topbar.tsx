@@ -6,7 +6,7 @@ export function Topbar({ unread }: { unread: number }) {
   return (
     <header className="no-print sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur">
       <div className="flex h-16 items-center gap-3 pl-16 pr-4 lg:px-8">
-        <form action="/buscar" className="relative flex-1 max-w-xl" role="search">
+        <form action="/buscar" className="relative min-w-0 max-w-xl flex-1" role="search">
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
           <input
             name="q"

@@ -47,7 +47,7 @@ export async function ProfileView({ staff, showLimit }: { staff: Staff; showLimi
         {stats.map(([k, v]) => <Card key={k} className="p-4"><p className="tabular text-2xl font-semibold">{v}</p><p className="text-xs text-ink-3">{k}</p></Card>)}
       </div>
       <p className="text-xs text-ink-3">Estas cifras sirven para organizar y distribuir el trabajo. No constituyen una valoración del rendimiento.</p>
-      <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-6">
           <Card><CardHeader title="Incidencias abiertas" actions={<Link href={`/incidencias?vista=abiertas&gestora=${staff.id}`} className="text-sm text-brand hover:underline">Ver todas</Link>} />
             {!open.length ? <EmptyState title="Sin incidencias abiertas" /> : (

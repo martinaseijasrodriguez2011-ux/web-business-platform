@@ -81,7 +81,7 @@ export function Timeline({ items, resolve, showContext, docUrls }: { items: Acti
       {items.map((a, idx) => {
         const meta = ICONS[a.kind] ?? { icon: CircleDot, tone: "gris" };
         const Icon = meta.icon;
-        const changes = a.changes && a.kind !== "cambio_estado" ? Object.entries(a.changes).filter(([, v]) => v && typeof v === "object" && "new" in v) : [];
+        const changes = a.changes && !/estado$/.test(a.kind) && a.kind !== "autorizacion" && a.kind !== "pago_confirmado" ? Object.entries(a.changes).filter(([, v]) => v && typeof v === "object" && "new" in v) : [];
         return (
           <li key={a.id} className="relative flex gap-4 pb-6 last:pb-0">
             {idx < items.length - 1 && <span className="absolute left-[17px] top-9 h-[calc(100%-2.25rem)] w-px bg-line" aria-hidden />}

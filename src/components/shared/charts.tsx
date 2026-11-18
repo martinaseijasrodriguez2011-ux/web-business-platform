@@ -8,7 +8,7 @@ export type Datum = { label: string; value: number; href?: string; tone?: string
 const TONE: Record<string, string> = {
   gris: "#9ca3af", azul: "#3b82f6", naranja: "#f97316", rojo: "#ef4444", verde: "#22c55e", violeta: "#8b5cf6",
 };
-const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", useGrouping: "always", maximumFractionDigits: 0 });
 
 function TooltipBox({ active, payload, money }: { active?: boolean; payload?: { payload: Datum }[]; money?: boolean }) {
   if (!active || !payload?.length) return null;

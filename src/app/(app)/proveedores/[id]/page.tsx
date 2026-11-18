@@ -42,7 +42,7 @@ export default async function ProveedorPage({ params }: { params: Promise<{ id: 
           <Card key={k as string} className="p-4"><p className="text-xs text-ink-3">{k}</p><p className="tabular mt-1 text-xl font-semibold">{v}</p></Card>
         ))}
       </div>
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           <Card><CardHeader title="Presupuestos enviados" />
             {!budgets?.length ? <CardBody><p className="text-sm text-ink-3">Sin presupuestos.</p></CardBody> : (

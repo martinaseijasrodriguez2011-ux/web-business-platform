@@ -1,6 +1,6 @@
 const TZ = "Europe/Madrid";
 
-const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", useGrouping: "always" });
 const dateFmt = new Intl.DateTimeFormat("es-ES", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" });
 const dateTimeFmt = new Intl.DateTimeFormat("es-ES", {
   timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",

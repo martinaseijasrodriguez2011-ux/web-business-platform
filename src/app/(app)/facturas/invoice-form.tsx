@@ -8,7 +8,7 @@ import { Alert, Field, FormSection, Input, Select, Textarea } from "@/components
 import { ButtonLink } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/types";
 
-const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", useGrouping: "always" });
 const parse = (v: string) => { const n = Number((v.includes(",") ? v.replace(/\./g, "").replace(",", ".") : v).replace(/[^\d.-]/g, "")); return Number.isFinite(n) ? n : NaN; };
 
 type Budget = { id: string; code: string; concept: string; community_id: string; incident_id: string | null; provider_id: string | null; base_amount: number | null; vat_rate: number; total_amount: number };

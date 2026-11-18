@@ -60,7 +60,7 @@ export default async function FacturaPage({ params }: { params: Promise<{ id: st
           )}
         </>}
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_400px]">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-6">
           <Card>
             <CardHeader title="Datos de la factura" actions={f.status !== "pagada" && (

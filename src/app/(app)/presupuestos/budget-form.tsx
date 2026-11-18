@@ -8,7 +8,7 @@ import { Field, FormSection, Input, Select, Textarea } from "@/components/ui/for
 import { ButtonLink } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/types";
 
-const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", useGrouping: "always" });
 function parseMoney(v: string) {
   const n = Number((v.includes(",") ? v.replace(/\./g, "").replace(",", ".") : v).replace(/[^\d.-]/g, ""));
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;

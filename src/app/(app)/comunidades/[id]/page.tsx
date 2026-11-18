@@ -98,7 +98,7 @@ async function Resumen({ id, c, editable }: { id: string; c: CommunityView; edit
   const supabase = await createClient();
   const { data: contacts } = await supabase.from("community_contacts").select("*").eq("community_id", id).order("created_at");
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="grid gap-6 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
         <CardHeader title="Información general" />
         <CardBody>

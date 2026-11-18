@@ -121,7 +121,7 @@ export default async function IncidenciaPage({ params, searchParams }: { params:
       {creada && <div className="mb-4"><Alert tone="verde">Incidencia {inc.code} registrada correctamente.</Alert></div>}
       {!editable && <div className="mb-4"><Alert tone="azul">Puede consultar esta incidencia y registrar actuaciones. La modificación corresponde a la gestora responsable o a Dirección/Coordinación.</Alert></div>}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           <Card>
             <CardHeader title="Resumen" />

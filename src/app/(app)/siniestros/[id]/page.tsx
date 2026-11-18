@@ -52,7 +52,7 @@ export default async function SiniestroPage({ params }: { params: Promise<{ id: 
             </FormModal>
           )}
         </>} />
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           <Card><CardHeader title="Datos del siniestro" /><CardBody>
             <DataList items={[

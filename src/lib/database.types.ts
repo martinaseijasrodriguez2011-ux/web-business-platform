@@ -1365,6 +1365,9 @@ isOneToOne: false
 "dashboard_stats":
 { Args: { "p_staff"?: string }; Returns: Json
                            },
+"fmt_eur":
+{ Args: { "p": number }; Returns: string
+                           },
 "generate_reminders":
 { Args: Record<PropertyKey, never>; Returns: number
                            },

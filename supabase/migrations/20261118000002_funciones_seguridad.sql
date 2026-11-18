@@ -78,6 +78,12 @@ language sql stable set search_path = '' as $$
   select coalesce(current_setting('ar.workflow', true), '') = 'on'
 $$;
 
+-- Importe en formato español (1.234,56), independiente de la configuración regional del servidor
+create or replace function public.fmt_eur(p numeric) returns text
+language sql immutable set search_path = '' as $$
+  select translate(to_char(coalesce(p, 0), 'FM999,999,999,990.00'), ',.', '.,')
+$$;
+
 -- Genera códigos correlativos sin duplicados: PREFIJO-AAAA-NNNN
 create or replace function public.next_code(p_prefix text) returns text
 language plpgsql security definer set search_path = '' as $$
@@ -659,10 +665,10 @@ begin
   select trade_name into v_provider from public.providers where id = new.provider_id;
   if tg_op = 'INSERT' then
     perform public.log_activity('factura_registrada',
-      'Factura ' || new.invoice_number || ' de ' || v_provider || ' registrada (' || to_char(new.total_amount, 'FM999G999G990D00') || ' €)',
+      'Factura ' || new.invoice_number || ' de ' || v_provider || ' registrada (' || public.fmt_eur(new.total_amount) || ' €)',
       new.community_id, new.incident_id, null, new.budget_id, new.id, null, null, null, new.provider_id);
     perform public.notify_supervisors('factura_recibida', 'Factura recibida: ' || new.invoice_number,
-      v_provider || ' · ' || to_char(new.total_amount, 'FM999G999G990D00') || ' €', v_link, 'factura:' || new.id,
+      v_provider || ' · ' || public.fmt_eur(new.total_amount) || ' €', v_link, 'factura:' || new.id,
       public.current_staff_id());
     return null;
   end if;
@@ -673,7 +679,7 @@ begin
       new.community_id, new.incident_id, jsonb_build_object('status', v_diff -> 'status'), new.budget_id, new.id);
     if new.status = 'pendiente_pago' then
       perform public.notify_supervisors('factura_pendiente_pago', 'Factura pendiente de pago: ' || new.invoice_number,
-        v_provider || ' · ' || to_char(new.total_amount, 'FM999G999G990D00') || ' €', v_link, 'pendiente_pago:' || new.id);
+        v_provider || ' · ' || public.fmt_eur(new.total_amount) || ' €', v_link, 'pendiente_pago:' || new.id);
     end if;
     v_diff := v_diff - 'status';
   end if;
@@ -863,7 +869,7 @@ begin
     end if;
     if b.total_amount > v_me.approval_limit then
       raise exception 'LIMITE_SUPERADO: El importe (% €) supera su límite de aprobación (% €). Solicite autorización superior.',
-        to_char(b.total_amount, 'FM999G999G990D00'), to_char(v_me.approval_limit, 'FM999G999G990D00') using errcode = '42501';
+        public.fmt_eur(b.total_amount), public.fmt_eur(v_me.approval_limit) using errcode = '42501';
     end if;
     v_kind := 'aprobacion_interna';
   end if;
@@ -912,7 +918,7 @@ begin
   perform public.log_activity('presupuesto_estado', 'Solicitada autorización superior para ' || b.code,
     b.community_id, b.incident_id, null, b.id, null, null, null, null, b.provider_id, p_notes);
   perform public.notify_supervisors('presupuesto_supera_limite', 'Autorización superior solicitada: ' || b.code,
-    b.concept || ' · ' || to_char(b.total_amount, 'FM999G999G990D00') || ' €', '/presupuestos/' || b.id,
+    b.concept || ' · ' || public.fmt_eur(b.total_amount) || ' €', '/presupuestos/' || b.id,
     'superior:' || b.id);
 end $$;
 
@@ -958,7 +964,7 @@ begin
   select coalesce(sum(amount), 0) into v_paid from public.payments where invoice_id = p_invoice;
   if v_paid + p_amount > f.total_amount then
     raise exception 'El pago (% €) supera el importe pendiente de la factura (% €).',
-      to_char(p_amount, 'FM999G999G990D00'), to_char(f.total_amount - v_paid, 'FM999G999G990D00');
+      public.fmt_eur(p_amount), public.fmt_eur(f.total_amount - v_paid);
   end if;
 
   insert into public.payments (invoice_id, amount, paid_on, confirmed_by, notes)
@@ -973,11 +979,11 @@ begin
   perform set_config('ar.workflow', 'off', true);
 
   perform public.log_activity('pago_confirmado',
-    'Pago confirmado de ' || to_char(p_amount, 'FM999G999G990D00') || ' € (factura ' || f.invoice_number || ')',
+    'Pago confirmado de ' || public.fmt_eur(p_amount) || ' € (factura ' || f.invoice_number || ')',
     f.community_id, f.incident_id, jsonb_build_object('importe', p_amount, 'fecha', p_paid_on), f.budget_id, f.id,
     null, null, null, f.provider_id, p_notes);
   perform public.notify(f.created_by, 'pago_confirmado', 'Pago confirmado: factura ' || f.invoice_number,
-    to_char(p_amount, 'FM999G999G990D00') || ' €', '/facturas/' || f.id);
+    public.fmt_eur(p_amount) || ' €', '/facturas/' || f.id);
   return jsonb_build_object('ok', true, 'fully_paid', v_paid + p_amount >= f.total_amount);
 end $$;
 
