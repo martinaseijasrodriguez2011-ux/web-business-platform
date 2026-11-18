@@ -1092,7 +1092,7 @@ create or replace function public.update_my_profile(p_phone text, p_avatar_path 
 language plpgsql security definer set search_path = '' as $$
 begin
   if not public.is_staff() then raise exception 'Acceso no autorizado.' using errcode = '42501'; end if;
-  update public.staff set phone = nullif(trim(p_phone), ''), avatar_path = p_avatar_path
+  update public.staff set phone = nullif(trim(p_phone), ''), avatar_path = nullif(p_avatar_path, '')
    where id = public.current_staff_id();
 end $$;
 

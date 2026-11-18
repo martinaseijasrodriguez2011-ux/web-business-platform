@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   Home, AlertCircle, Building2, FileText, Receipt, Truck, ShieldAlert, CalendarDays, BarChart3, Users, Settings,
   Bell, LogOut, ChevronsLeft, ChevronsRight, Menu, X,
@@ -25,23 +25,28 @@ const NAV = [
   { href: "/configuracion", label: "Configuración", icon: Settings, supervisorOnly: true },
 ];
 
+function subscribe(cb: () => void) {
+  window.addEventListener("ar-sidebar", cb);
+  window.addEventListener("storage", cb);
+  return () => { window.removeEventListener("ar-sidebar", cb); window.removeEventListener("storage", cb); };
+}
+function readCollapsed() {
+  try { return localStorage.getItem("ar.sidebar") === "1"; } catch { return false; }
+}
+
 export function Sidebar({
   name, position, initials, avatarUrl, unread, supervisor, logoUrl,
 }: { name: string; position: string; initials: string; avatarUrl?: string | null; unread: number; supervisor: boolean; logoUrl?: string | null }) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    try { setCollapsed(localStorage.getItem("ar.sidebar") === "1"); } catch {}
-  }, []);
-  useEffect(() => setMobileOpen(false), [pathname]);
+  const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
+  // El menú móvil se cierra solo al cambiar de página (se abre para la ruta actual)
+  const [mobileOpenAt, setMobileOpenAt] = useState<string | null>(null);
+  const mobileOpen = mobileOpenAt === pathname;
+  const setMobileOpen = (open: boolean) => setMobileOpenAt(open ? pathname : null);
 
   const toggle = () => {
-    setCollapsed((c) => {
-      try { localStorage.setItem("ar.sidebar", c ? "0" : "1"); } catch {}
-      return !c;
-    });
+    try { localStorage.setItem("ar.sidebar", collapsed ? "0" : "1"); } catch {}
+    window.dispatchEvent(new Event("ar-sidebar"));
   };
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));

@@ -28,7 +28,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   await supabase.rpc("generate_reminders");
 
   const today = hoyISO();
-  const soon = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+  const soonDate = new Date(`${today}T12:00:00Z`);
+  soonDate.setUTCDate(soonDate.getUTCDate() + 3);
+  const soon = soonDate.toISOString().slice(0, 10);
 
   let incQ = supabase.from("incidents_view").select("id, code, title, status, priority, is_open, is_overdue, community_id, community_name, manager_id, manager_name, category_name, created_at, due_on, planned_on");
   if (scope) incQ = incQ.eq("manager_id", scope);

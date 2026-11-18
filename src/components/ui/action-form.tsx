@@ -27,7 +27,7 @@ export function ActionForm({
   const [state, formAction] = useActionState(action, null);
   const ref = useRef<HTMLFormElement>(null);
   const onSuccessRef = useRef(onSuccess);
-  onSuccessRef.current = onSuccess;
+  useEffect(() => { onSuccessRef.current = onSuccess; });
 
   useEffect(() => {
     if (state?.ok) {
