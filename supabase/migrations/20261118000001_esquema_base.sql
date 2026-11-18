@@ -247,7 +247,7 @@ create table public.code_counters (
 -- -----------------------------------------------------------------------------
 create table public.incidents (
   id uuid primary key default gen_random_uuid(),
-  code text not null unique,
+  code text not null unique default '',   -- lo asigna el disparador (AR-AAAA-NNNN)
   community_id uuid not null references public.communities (id),
   manager_id uuid references public.staff (id),
   created_by uuid references public.staff (id),
@@ -282,7 +282,7 @@ create index incidents_title_trgm on public.incidents using gin (title extension
 -- -----------------------------------------------------------------------------
 create table public.claims (
   id uuid primary key default gen_random_uuid(),
-  code text not null unique,
+  code text not null unique default '',   -- lo asigna el disparador (S-AAAA-NNNN)
   community_id uuid not null references public.communities (id),
   incident_id uuid references public.incidents (id),
   manager_id uuid references public.staff (id),
@@ -332,7 +332,7 @@ create index tasks_assignee_idx on public.tasks (assignee_id) where not done;
 -- -----------------------------------------------------------------------------
 create table public.budgets (
   id uuid primary key default gen_random_uuid(),
-  code text not null unique,
+  code text not null unique default '',   -- lo asigna el disparador (P-AAAA-NNNN)
   community_id uuid not null references public.communities (id),
   incident_id uuid references public.incidents (id),
   provider_id uuid references public.providers (id),
