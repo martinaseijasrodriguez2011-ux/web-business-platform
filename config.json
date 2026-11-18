@@ -25,7 +25,7 @@
   "admin_level": "8",
   "leads_por_dia": 20,
   "max_por_categoria": 3,
-  "solo_con_movil": false,
+  "solo_con_movil": true,
   "remitente": {
     "nombre": "Martina Seijas",
     "marca": "",
@@ -36,5 +36,6 @@
       "web_completa": "250-500 € según secciones, carta o catálogo",
       "mantenimiento_mensual": "20 €"
     }
-  }
+  },
+  "antiguedad_max_anos": 5
 }

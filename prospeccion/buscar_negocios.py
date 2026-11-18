@@ -156,7 +156,7 @@ def construir_consulta(ciudad: str, admin_level: str) -> str:
         "[out:json][timeout:180];\n"
         f'area["name"="{ciudad_escapada}"]["boundary"="administrative"]["admin_level"="{admin_level}"]->.a;\n'
         "(\n" + "\n".join(bloques) + "\n);\n"
-        "out center tags;"
+        "out center meta;"
     )
 
 
@@ -190,14 +190,33 @@ def normalizar_telefonos(tags: dict) -> list[str]:
             d = d[4:]
         elif d.startswith("34") and len(d) == 11:
             d = d[2:]
-        if len(d) == 9 and d[0] in "6789" and d not in resultado:
+        if (MOVIL.match(d) or (not SOLO_MOVIL and FIJO.match(d))) and d not in resultado:
             resultado.append(d)
     # móviles primero
-    return sorted(resultado, key=lambda x: x[0] not in "67")
+    return sorted(resultado, key=lambda x: not MOVIL.match(x))
+
+
+# Móviles: 6xx y 71x-74x. Fijos geográficos: 81x-88x y 91x-98x. Se descartan 70x, 80x y 90x.
+MOVIL = re.compile(r"^(6\d{8}|7[1-4]\d{7})$")
+FIJO = re.compile(r"^(8[1-8]|9[1-8])\d{7}$")
+SOLO_MOVIL = True
+ANTIGUEDAD_MAX = 5
+
+
+def cerrado(t: dict) -> bool:
+    return (t.get("opening_hours") in ("closed", "off") or t.get("disused") == "yes" or t.get("abandoned") == "yes"
+            or bool(t.get("end_date") or t.get("disused:shop") or t.get("was:shop")))
+
+
+def fecha_dato(el: dict) -> str:
+    t = el.get("tags", {})
+    c = t.get("check_date") or t.get("survey:date") or ""
+    ts = (el.get("timestamp") or "")[:10]
+    return max(c, ts)
 
 
 def es_movil(tel: str) -> bool:
-    return tel[:1] in "67"
+    return bool(MOVIL.match(tel))
 
 
 def formatear_tel(tel: str) -> str:
@@ -235,10 +254,13 @@ def extraer_negocios(osm: dict, ciudad: str) -> list[dict]:
     for el in osm.get("elements", []):
         tags = el.get("tags", {})
         cat = categoria_de(tags)
-        if not cat:
+        if not cat or cerrado(tags):
             continue
         tels = normalizar_telefonos(tags)
         if not tels:
+            continue
+        fd = fecha_dato(el)
+        if fd and int(fd[:4]) < dt.date.today().year - ANTIGUEDAD_MAX:
             continue
         lat = el.get("lat") or el.get("center", {}).get("lat")
         lon = el.get("lon") or el.get("center", {}).get("lon")
@@ -617,7 +639,10 @@ def exportar_json(seleccion: list[dict], r: dict, fecha: str, carpeta: Path) -> 
 
 # --------------------------------------------------------------------------- #
 def main() -> int:
+    global SOLO_MOVIL, ANTIGUEDAD_MAX
     cfg = json.loads((RAIZ / "config.json").read_text(encoding="utf-8"))
+    SOLO_MOVIL = cfg.get("solo_con_movil", True)
+    ANTIGUEDAD_MAX = cfg.get("antiguedad_max_anos", 5)
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--ciudad", action="append", help="Ciudad (puede repetirse). Por defecto, las de config.json")
     ap.add_argument("--cantidad", type=int, default=cfg.get("leads_por_dia", 20))

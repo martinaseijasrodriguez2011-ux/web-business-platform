@@ -76,6 +76,7 @@ h2{font-family:var(--display);font-weight:600;font-size:1.3rem;line-height:1.15;
 .tel{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tel a{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;text-decoration:none}
 .pill{font-size:.72rem;border:1px solid var(--line);border-radius:6px;padding:0 6px;color:var(--muted);font-style:normal}
+.malo{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--bad);border-radius:8px;padding:3px 8px;font:500 .74rem var(--body);cursor:pointer}
 .wa{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--wa);color:var(--wa-ink);text-decoration:none;font-weight:600;border-radius:14px;padding:13px;font-size:1rem}
 .wa svg{width:20px;height:20px;fill:currentColor}
 .wa.fijo{background:var(--ink);color:var(--bg)}
@@ -144,6 +145,7 @@ function leer(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):
 function guardar(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let listas=leer("nd_listas",{});          // {fecha: [lead,...]}
 let historial=new Set(leer("nd_historial",[])); // ids OSM ya entregados
+let reserva=leer("nd_reserva",[]);   // candidatos sobrantes para sustituir números no válidos
 let diaSel=null, filtro="todos";
 
 /* ---------- fechas ---------- */
@@ -157,7 +159,7 @@ function consulta(ciudad){
   const porClave={};D.categorias.forEach(([k,v])=>(porClave[k]=porClave[k]||[]).push(v));
   const sinWeb='[!"website"][!"contact:website"][!"url"][!"brand"]';
   const bloques=Object.entries(porClave).map(([k,vs])=>`  nwr(area.a)["${k}"~"^(${[...new Set(vs)].sort().join("|")})$"]["name"]${sinWeb};`).join("\n");
-  return `[out:json][timeout:120];\narea["name"="${ciudad.replace(/"/g,'\\"')}"]["boundary"="administrative"]["admin_level"="${D.config.admin_level||"8"}"]->.a;\n(\n${bloques}\n);\nout center tags;`;
+  return `[out:json][timeout:120];\narea["name"="${ciudad.replace(/"/g,'\\"')}"]["boundary"="administrative"]["admin_level"="${D.config.admin_level||"8"}"]->.a;\n(\n${bloques}\n);\nout center meta;`;
 }
 async function descargar(ciudad){
   let ultimo;
@@ -174,12 +176,16 @@ async function descargar(ciudad){
 }
 
 /* ---------- tratamiento (equivalente a buscar_negocios.py) ---------- */
+// Móviles: 6xx y 71x-74x. Fijos geográficos: 81x-88x y 91x-98x. Fuera 70x, 80x, 90x (especiales/tarificación).
+const MOVIL=/^(6\d{8}|7[1-4]\d{7})$/, FIJO=/^(8[1-8]|9[1-8])\d{7}$/;
+const CERRADO=t=>t.opening_hours==="closed"||t.opening_hours==="off"||t.disused==="yes"||t.abandoned==="yes"||t.end_date||t["disused:shop"]||t["was:shop"];
+function fechaDato(el){const t=el.tags||{};const c=t.check_date||t["survey:date"]||"";const ts=(el.timestamp||"").slice(0,10);return c>ts?c:ts}
 function telefonos(tags){
   const crudos=[];["contact:mobile","mobile","phone","contact:phone","contact:whatsapp"].forEach(k=>{if(tags[k])crudos.push(...tags[k].split(/[;,/]/))});
   const res=[];
   for(const t of crudos){let d=t.replace(/\D/g,"");if(d.startsWith("0034"))d=d.slice(4);else if(d.startsWith("34")&&d.length===11)d=d.slice(2);
-    if(d.length===9&&"6789".includes(d[0])&&!res.includes(d))res.push(d)}
-  return res.sort((a,b)=>("67".includes(a[0])?0:1)-("67".includes(b[0])?0:1));
+    if((MOVIL.test(d)||(!D.config.solo_con_movil&&FIJO.test(d)))&&!res.includes(d))res.push(d)}
+  return res.sort((a,b)=>(MOVIL.test(a)?0:1)-(MOVIL.test(b)?0:1));
 }
 const fmtTel=t=>`+34 ${t.slice(0,3)} ${t.slice(3,6)} ${t.slice(6)}`;
 function direccion(t){const p=[`${t["addr:street"]||""} ${t["addr:housenumber"]||""}`.trim(),`${t["addr:postcode"]||""} ${t["addr:city"]||""}`.trim()].filter(Boolean);return p.join(", ")||"(sin dirección en el mapa)"}
@@ -188,10 +194,12 @@ function categoria(t){for(const [k,v,nom,g] of D.categorias)if(t[k]===v)return[n
 function extraer(osm,ciudad){
   const out=[];
   for(const el of osm.elements||[]){
-    const t=el.tags||{};const c=categoria(t);if(!c||!t.name)continue;
+    const t=el.tags||{};const c=categoria(t);if(!c||!t.name||CERRADO(t))continue;
     const tels=telefonos(t);if(!tels.length)continue;
+    const fd=fechaDato(el),maxA=D.config.antiguedad_max_anos||5;
+    if(fd&&Number(fd.slice(0,4))<new Date().getFullYear()-maxA)continue;
     out.push({id:`${el.type}/${el.id}`,nombre:t.name.trim(),categoria:c[0],grupo:c[1],ciudad,direccion:direccion(t),
-      telefono:tels[0],movil:"67".includes(tels[0][0]),instagram:instagram(t),horario:t.opening_hours||"",
+      telefono:tels[0],movil:MOVIL.test(tels[0]),actualizado:fd,instagram:instagram(t),horario:t.opening_hours||"",
       lat:el.lat??el.center?.lat,lon:el.lon??el.center?.lon});
   }
   return out;
@@ -199,7 +207,7 @@ function extraer(osm,ciudad){
 function barajar(a,semilla){let s=0;for(const ch of semilla)s=(s*31+ch.charCodeAt(0))>>>0;const r=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function seleccionar(negocios,cantidad,semilla){
   const porCat={};negocios.filter(n=>!historial.has(n.id)).forEach(n=>(porCat[n.categoria]=porCat[n.categoria]||[]).push(n));
-  Object.values(porCat).forEach(l=>{barajar(l,semilla);l.sort((a,b)=>(b.movil?1:0)-(a.movil?1:0))});
+  Object.values(porCat).forEach(l=>{barajar(l,semilla);l.sort((a,b)=>((b.movil?1:0)-(a.movil?1:0))||((b.actualizado||"").slice(0,4)).localeCompare((a.actualizado||"").slice(0,4)))});
   const orden=barajar(Object.keys(porCat),semilla+"o"),sel=[],max=D.config.max_por_categoria||3;
   for(let r=0;r<max&&sel.length<cantidad;r++)for(const c of orden)if(porCat[c].length>r&&sel.length<cantidad)sel.push(porCat[c][r]);
   return sel;
@@ -233,7 +241,9 @@ async function buscar(){
   const previos=listas[fecha]||[];
   sel=sel.map((n,i)=>completar(n,previos.length+i,fecha));
   listas[fecha]=previos.concat(sel);sel.forEach(n=>historial.add(n.id));
-  guardar("nd_listas",listas);guardar("nd_historial",[...historial]);
+  const elegidos=new Set(sel.map(n=>n.id));
+  reserva=negocios.filter(n=>!historial.has(n.id)&&!elegidos.has(n.id)).sort((a,b)=>(b.actualizado||"").localeCompare(a.actualizado||""));
+  guardar("nd_reserva",reserva);guardar("nd_listas",listas);guardar("nd_historial",[...historial]);
   $("estadoBusq").textContent=`${sel.length} negocios nuevos en ${[...new Set(sel.map(n=>n.ciudad))].join(", ")}.`+(fallos.length?` No respondió: ${fallos.join(", ")}.`:"")+(sel.length<cantidad?" Para más, elige otra ciudad.":"");
   diaSel=fecha;filtro="todos";render();
 }
@@ -272,7 +282,7 @@ function card(l){
   <div class="head"><div class="mono" aria-hidden="true">${esc(l.nombre.trim()[0].toUpperCase())}</div>
     <div class="who"><div class="cat">${esc(l.categoria)}</div><h2>${esc(l.nombre)}</h2></div><span class="num">#${l.n}</span></div>
   <div class="datos"><div>${esc(l.direccion)} · <strong>${esc(l.ciudad)}</strong></div>${l.horario?`<div>Horario: ${esc(l.horario)}</div>`:""}
-    <div class="tel"><a href="tel:+34${l.telefono}">${fmtTel(l.telefono)}</a><em class="pill">${l.movil?"móvil":"fijo"}</em></div></div>
+    <div class="tel"><a href="tel:+34${l.telefono}">${fmtTel(l.telefono)}</a><em class="pill">${l.movil?"móvil":"fijo"}</em>${l.actualizado?`<em class="pill">dato de ${l.actualizado.slice(0,4)}</em>`:""}<button class="malo" data-malo="${esc(l.id)}">Número no válido</button></div></div>
   ${wa}
   <div class="links"><a href="${esc(l.verificar)}" target="_blank" rel="noopener">¿Tiene web?</a>
     <a href="${esc(l.ig_url)}" target="_blank" rel="noopener">${l.instagram?"Instagram":"Buscar Instagram"}</a>
@@ -280,6 +290,14 @@ function card(l){
   ${bloque("Mensaje de WhatsApp",l.msg_wa,"wa-"+k)}${bloque("Mensaje de Instagram",l.msg_ig,"ig-"+k)}${bloque("Prompt para crear su web",l.prompt,"pr-"+k)}
   <div class="estado" role="group" aria-label="Estado del contacto">${ESTADOS.map(([e,t,c])=>`<button data-id="${esc(l.id)}" data-e="${e}" aria-pressed="${l.estado===e}" style="--sc:${c}">${t}</button>`).join("")}</div>
 </article>`}
+function reemplazar(id){
+  const lista=listas[diaSel],i=lista.findIndex(x=>x.id===id);if(i<0)return;
+  historial.add(id);
+  let nuevo=null;while(reserva.length&&!nuevo){const c=reserva.shift();if(!historial.has(c.id))nuevo=c}
+  if(nuevo){lista[i]=completar(nuevo,i,diaSel);lista[i].n=i+1;historial.add(nuevo.id);$("estadoBusq").textContent=`Sustituido por ${nuevo.nombre}.`}
+  else{lista.splice(i,1);lista.forEach((x,k)=>x.n=k+1);$("estadoBusq").textContent="Quitado. No quedan más negocios de reserva: pulsa «Buscar 20 más»."}
+  guardar("nd_listas",listas);guardar("nd_historial",[...historial]);guardar("nd_reserva",reserva);render();
+}
 function copiar(id,b){const el=$(id);if(!el)return;const o=b.textContent,ok=()=>{b.textContent="Copiado";setTimeout(()=>b.textContent=o,1400)};
   const sel=()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand("copy");ok()}catch(e){}};
   try{navigator.clipboard.writeText(el.innerText).then(ok,sel)}catch(e){sel()}}
@@ -289,6 +307,7 @@ document.addEventListener("click",ev=>{const t=ev.target.closest("button");if(!t
   else if(t.dataset.copy)copiar(t.dataset.copy,t);
   else if(t.dataset.d){diaSel=t.dataset.d;filtro="todos";render()}
   else if(t.dataset.f){filtro=t.dataset.f;render()}
+  else if(t.dataset.malo)reemplazar(t.dataset.malo);
   else if(t.dataset.e){const l=listas[diaSel].find(x=>x.id===t.dataset.id);if(l){l.estado=t.dataset.e;guardar("nd_listas",listas);render()}}
 });
 $("selCiudad").innerHTML=`<option value="auto">Zona de hoy: ${esc(ciudadesDeHoy(hoyISO()).join(", "))}</option>`+D.config.ciudades.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
