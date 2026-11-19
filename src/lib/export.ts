@@ -4,7 +4,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Report } from "@/lib/reports";
 import { euros, fechaHora } from "@/lib/format";
-import { LOGO_JPEG_BASE64, LOGO_SIZE } from "@/lib/brand-logo";
+import { LOGO_PNG_BASE64, LOGO_SIZE } from "@/lib/brand-logo";
 
 const BRAND = "3F3F3F";
 
@@ -54,7 +54,7 @@ export function reportToPdf(report: Report, company: string, author: string) {
   const w = doc.internal.pageSize.getWidth();
   const header = () => {
     // Logotipo oficial (proporción original) y filete en rojo corporativo
-    doc.addImage(LOGO_JPEG_BASE64, "JPEG", 10, 3, 31, (31 * LOGO_SIZE.height) / LOGO_SIZE.width);
+    doc.addImage(LOGO_PNG_BASE64, "PNG", 10, 3, 31, (31 * LOGO_SIZE.height) / LOGO_SIZE.width);
     doc.setDrawColor(199, 44, 46); doc.setLineWidth(0.6); doc.line(10, 15, w - 10, 15);
     doc.setTextColor(100, 100, 100); doc.setFontSize(8); doc.setFont("helvetica", "normal");
     doc.text(`${company} · AR Incidencias`, w - 10, 7, { align: "right" });
@@ -79,6 +79,7 @@ export function reportToPdf(report: Report, company: string, author: string) {
       startY: y + 2, head: [s.columns], body: s.rows.map((r) => r.map((v, i) => (s.numeric?.includes(i) && typeof v === "number" ? euros(v) : String(v)))),
       styles: { fontSize: 7.5, cellPadding: 1.5, overflow: "linebreak" }, headStyles: { fillColor: [63, 63, 63] }, alternateRowStyles: { fillColor: [249, 250, 251] },
       columnStyles: Object.fromEntries((s.numeric ?? []).map((i) => [i, { halign: "right" as const }])), margin: { left: 10, right: 10, top: 18 },
+      didParseCell: (d) => { if (d.section === "head" && s.numeric?.includes(d.column.index)) d.cell.styles.halign = "right"; },
       didDrawPage: () => header(),
     });
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;

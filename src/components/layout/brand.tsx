@@ -1,6 +1,6 @@
 import { cx } from "@/components/ui/cx";
 
-export const DEFAULT_LOGO = "/brand/logo-altayo-rodriguez.jpg";
+export const DEFAULT_LOGO = "/brand/logo-altayo-rodriguez.svg";
 
 /**
  * Marca de la aplicación con el logotipo oficial de Altayó & Rodríguez,
