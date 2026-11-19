@@ -11,6 +11,7 @@ export type Staff = {
   user_id: string | null;
   active: boolean;
   approval_limit: number | null;
+  can_edit_all: boolean;
   avatar_path: string | null;
   phone: string | null;
   invited_at: string | null;

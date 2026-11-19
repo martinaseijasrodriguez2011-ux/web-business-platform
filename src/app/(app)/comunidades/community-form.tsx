@@ -7,10 +7,11 @@ import { Field, FormSection, Input, Select, Textarea } from "@/components/ui/for
 import { ButtonLink } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/types";
 
-type Defaults = Partial<{ code: string; name: string; address: string | null; postal_code: string | null; city: string | null; manager_id: string | null; president_name: string | null; president_contact: string | null; notes: string | null; registered_on: string | null; active: boolean }>;
+type Defaults = Partial<{ parent_id: string | null; code: string; name: string; address: string | null; postal_code: string | null; city: string | null; manager_id: string | null; president_name: string | null; president_contact: string | null; notes: string | null; registered_on: string | null; active: boolean }>;
 
-export function CommunityForm({ action, staff, defaults, canAssign, mode, cancelHref }: {
+export function CommunityForm({ action, staff, defaults, canAssign, mode, cancelHref, parents }: {
   action: (p: ActionResult | null, fd: FormData) => Promise<ActionResult>;
+  parents: { id: string; name: string; code: string }[];
   staff: { id: string; full_name: string; active: boolean }[]; defaults?: Defaults; canAssign: boolean; mode: "create" | "edit"; cancelHref: string;
 }) {
   const router = useRouter();
@@ -34,6 +35,12 @@ export function CommunityForm({ action, staff, defaults, canAssign, mode, cancel
                 <input type="hidden" name="manager_id" value={defaults?.manager_id ?? ""} />
               </>
             )}
+          </Field>
+          <Field label="Comunidad general" htmlFor="parent_id" hint="Solo si es una subcomunidad (escalera, parking, piscina…) que forma parte de una comunidad general.">
+            <Select id="parent_id" name="parent_id" defaultValue={defaults?.parent_id ?? ""}>
+              <option value="">No es subcomunidad</option>
+              {parents.map((p) => <option key={p.id} value={p.id}>{p.name} · {p.code}</option>)}
+            </Select>
           </Field>
           {mode === "edit" && (
             <Field label="Situación" htmlFor="active">

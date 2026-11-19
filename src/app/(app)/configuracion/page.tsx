@@ -61,7 +61,7 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
           <tbody>{(staff ?? []).map((s) => (
             <tr key={s.id}>
               <Td><span className="font-medium">{s.full_name}</span><span className="block text-xs text-ink-3">{s.position}</span></Td>
-              <Td><Badge tone={s.role === "gestora" ? "gris" : "violeta"} dot={false}>{ROLE[s.role]}</Badge></Td>
+              <Td><div className="flex flex-wrap gap-1"><Badge tone={s.role === "gestora" ? "gris" : "violeta"} dot={false}>{ROLE[s.role]}</Badge>{s.can_edit_all && s.role === "gestora" && <Badge tone="azul" dot={false}>Edición global</Badge>}</div></Td>
               <Td className="text-ink-2">{s.email ?? <span className="text-ink-3">Pendiente de facilitar</span>}</Td>
               <Td>{!s.active ? <Badge tone="gris">Desactivado</Badge> : s.user_id ? <Badge tone="verde">Activo</Badge> : s.invited_at ? <Badge tone="naranja">Invitación enviada {fechaHora(s.invited_at)}</Badge> : <Badge tone="gris">Sin invitar</Badge>}</Td>
               <Td className="text-right">
@@ -77,6 +77,10 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
                     <Field label="Cargo" htmlFor={`po-${s.id}`} required><Input id={`po-${s.id}`} name="position" required defaultValue={s.position} /></Field>
                     <Field label="Rol" htmlFor={`ro-${s.id}`}><Select id={`ro-${s.id}`} name="role" defaultValue={s.role} disabled={s.id === meId}><option value="gestora">Gestión</option><option value="coordinacion">Coordinación</option><option value="direccion">Dirección</option></Select>{s.id === meId && <input type="hidden" name="role" value={s.role} />}</Field>
                     <Field label="Situación" htmlFor={`ac-${s.id}`}><Select id={`ac-${s.id}`} name="active" defaultValue={s.active ? "true" : "false"} disabled={s.id === meId}><option value="true">Activo</option><option value="false">Desactivado (sin acceso)</option></Select>{s.id === meId && <input type="hidden" name="active" value="true" />}</Field>
+                    <label className="flex items-start gap-2 text-sm text-ink-2">
+                      <input type="checkbox" name="can_edit_all" defaultChecked={s.can_edit_all} className="mt-1" />
+                      <span>Edición global: puede modificar incidencias, presupuestos, facturas, siniestros y datos de todas las comunidades, y aprobar presupuestos dentro de su propio límite. No incluye confirmar pagos, conceder autorización superior, asignar gestoras ni la configuración.</span>
+                    </label>
                   </FormModal>
                 </div>
               </Td>

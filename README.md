@@ -8,7 +8,7 @@ Plataforma interna de gestión de comunidades, incidencias, mantenimiento, presu
 |---|---|
 | Inicio | Panel con indicadores reales, «Necesita atención», actividad reciente, gráficos interactivos y carga de trabajo del equipo (Dirección/Coordinación). Vista global o «Mi trabajo». |
 | Incidencias | Alta con código automático `AR-AAAA-NNNN`, adjuntos, 15 estados, prioridades, 17 vistas rápidas con contador, filtros combinables, ordenación, checklist con progreso, cronología inalterable, exportación a Excel. |
-| Comunidades | Listado con estado general, ficha con 7 pestañas (resumen, incidencias, presupuestos, facturas y pagos, proveedores, documentación, historial), contactos, importación desde Excel con asignación de gestora. |
+| Comunidades | Comunidades generales y subcomunidades (escaleras, parking, piscina…). Listado con estado general, ficha con 7 pestañas (resumen, incidencias, presupuestos, facturas y pagos, proveedores, documentación, historial), contactos, importación desde Excel con asignación de gestora. |
 | Presupuestos | Varios por incidencia, comparativa (sin selección automática), IVA configurable calculado en servidor, autorización del presidente separada de la aprobación interna, límites individuales y autorización superior. |
 | Facturas y pagos | Registro por cualquier gestora, detección de diferencias con el presupuesto, pagos parciales o totales confirmados solo por Dirección y Coordinación. |
 | Proveedores | Directorio con especialidades, ficha con incidencias, comunidades, presupuestos aceptados/rechazados, facturas y gasto acumulado. |
@@ -36,7 +36,7 @@ tests/               pruebas de base de datos y de navegador
 
 ### Seguridad (aplicada en la base de datos, no solo en la interfaz)
 
-- **RLS activado en todas las tablas.** Todas las personas activas del equipo consultan todo; la modificación corresponde a la gestora responsable o a Dirección/Coordinación.
+- **RLS activado en todas las tablas.** Todas las personas activas del equipo consultan todo; la modificación corresponde a la gestora responsable, a Dirección/Coordinación o a quien tenga «edición global» (permiso individual que se activa en Configuración → Usuarios y que no incluye pagos, autorización superior ni configuración).
 - **Aprobación de presupuestos** solo mediante la función `approve_budget()`, que comprueba el límite de la gestora responsable. Un `UPDATE` directo a «aprobado» se rechaza.
 - **Pagos** solo mediante `confirm_payment()`, que exige rol de Dirección o Coordinación. Una factura nunca pasa a «pagada» por aprobar el presupuesto.
 - **Historial inalterable**: la tabla `activity` no admite modificación ni borrado; los cambios guardan valor anterior y nuevo. Auditoría técnica completa en `audit_log` (consultable por Dirección/Coordinación).

@@ -67,7 +67,8 @@ export default async function ComunidadPage({ params, searchParams }: { params: 
         back={<Link href="/comunidades" className="inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"><ChevronLeft size={16} /> Comunidades</Link>}
         title={c.name}
         subtitle={<span className="flex flex-wrap items-center gap-2"><span className="tabular">{c.code}</span><span>·</span><span>{[c.address, c.postal_code, c.city].filter(Boolean).join(", ") || "Dirección pendiente"}</span><span>·</span>
-          <span>Gestora: {c.manager_name ?? <Badge tone="naranja">Pendiente de asignar</Badge>}</span>{!c.active && <Badge tone="gris">De baja</Badge>}</span>}
+          <span>Gestora: {c.manager_name ?? <Badge tone="naranja">Pendiente de asignar</Badge>}</span>
+          {c.parent_id && <span>· Subcomunidad de <Link href={`/comunidades/${c.parent_id}`} className="text-brand hover:underline">{c.parent_name}</Link></span>}{!c.active && <Badge tone="gris">De baja</Badge>}</span>}
         actions={<>
           {editable && <ButtonLink href={`/comunidades/${id}/editar`} variant="secondary"><Pencil size={16} /> Editar</ButtonLink>}
           <ActivityModal action={addActivity.bind(null, { community_id: id })} nowLocal={ahoraLocal()} />
@@ -96,7 +97,10 @@ type CommunityView = Database["public"]["Views"]["communities_view"]["Row"];
 
 async function Resumen({ id, c, editable }: { id: string; c: CommunityView; editable: boolean }) {
   const supabase = await createClient();
-  const { data: contacts } = await supabase.from("community_contacts").select("*").eq("community_id", id).order("created_at");
+  const [{ data: contacts }, { data: subs }] = await Promise.all([
+    supabase.from("community_contacts").select("*").eq("community_id", id).order("created_at"),
+    supabase.from("communities_view").select("id, name, code, manager_name, open_incidents").eq("parent_id", id).order("code"),
+  ]);
   return (
     <div className="grid gap-6 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
@@ -104,9 +108,23 @@ async function Resumen({ id, c, editable }: { id: string; c: CommunityView; edit
         <CardBody>
           <DataList items={[
             ["Nombre", c.name], ["Código interno", c.code], ["Dirección", c.address], ["Código postal", c.postal_code], ["Población", c.city],
-            ["Gestora responsable", c.manager_name ?? "Pendiente de asignar"], ["Presidente/a", c.president_name], ["Contacto del presidente/a", c.president_contact],
+            ["Gestora responsable", c.manager_name ?? "Pendiente de asignar"],
+            ["Comunidad general", c.parent_id ? <Link key="p" href={`/comunidades/${c.parent_id}`} className="text-brand hover:underline">{c.parent_name} ({c.parent_code})</Link> : (c.subcommunities ?? 0) > 0 ? `Es comunidad general de ${c.subcommunities} subcomunidades` : null], ["Presidente/a", c.president_name], ["Contacto del presidente/a", c.president_contact],
             ["Fecha de alta", fecha(c.registered_on)], ["Última actividad", haceTiempo(c.last_activity_at)], ["Observaciones", c.notes],
           ]} />
+          {(subs?.length ?? 0) > 0 && (
+            <div className="mt-6">
+              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-3">Subcomunidades ({subs!.length})</h3>
+              <ul className="divide-y divide-line rounded-lg border border-line">
+                {subs!.map((s) => (
+                  <li key={s.id}><Link href={`/comunidades/${s.id}`} className="flex items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-surface-2">
+                    <span><span className="font-medium">{s.name}</span><span className="text-ink-3"> · {s.code} · {s.manager_name ?? "sin gestora"}</span></span>
+                    <span className="tabular text-xs text-ink-3">{s.open_incidents} abiertas</span>
+                  </Link></li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[["Abiertas", c.open_incidents], ["Atrasadas", c.overdue_incidents], ["Urgentes", c.urgent_incidents], ["Cerradas", c.closed_incidents]].map(([k, v]) => (
               <div key={k as string} className="rounded-lg bg-surface-2 p-3"><p className="text-xs text-ink-3">{k as string}</p><p className="tabular text-xl font-semibold">{v as number}</p></div>

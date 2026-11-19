@@ -37,6 +37,7 @@ export default async function EquipoPage() {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <Badge tone={s.role === "gestora" ? "gris" : "violeta"} dot={false}>{ROLE[s.role]}</Badge>
+                  {s.can_edit_all && s.role === "gestora" && <Badge tone="azul" dot={false}>Edición global</Badge>}
                   {!s.active && <Badge tone="gris">Desactivado</Badge>}
                   {s.active && !s.user_id && <Badge tone="naranja">Sin acceso (invitación pendiente)</Badge>}
                 </div>

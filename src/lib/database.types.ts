@@ -469,14 +469,14 @@ isOneToOne: false
                   ]
                 },"communities": {
                   Row: {
-                    "active": boolean,"address": string | null,"city": string | null,"code": string,"created_at": string,"created_by": string | null,"id": string,"last_activity_at": string,"manager_id": string | null,"name": string,"notes": string | null,"postal_code": string | null,"president_contact": string | null,"president_name": string | null,"registered_on": string | null,"updated_at": string
+                    "active": boolean,"address": string | null,"city": string | null,"code": string,"created_at": string,"created_by": string | null,"id": string,"last_activity_at": string,"manager_id": string | null,"name": string,"notes": string | null,"parent_id": string | null,"postal_code": string | null,"president_contact": string | null,"president_name": string | null,"registered_on": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"code": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"last_activity_at"?: string,"manager_id"?: string | null,"name": string,"notes"?: string | null,"postal_code"?: string | null,"president_contact"?: string | null,"president_name"?: string | null,"registered_on"?: string | null,"updated_at"?: string
+                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"code": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"last_activity_at"?: string,"manager_id"?: string | null,"name": string,"notes"?: string | null,"parent_id"?: string | null,"postal_code"?: string | null,"president_contact"?: string | null,"president_name"?: string | null,"registered_on"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"code"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"last_activity_at"?: string,"manager_id"?: string | null,"name"?: string,"notes"?: string | null,"postal_code"?: string | null,"president_contact"?: string | null,"president_name"?: string | null,"registered_on"?: string | null,"updated_at"?: string
+                    "active"?: boolean,"address"?: string | null,"city"?: string | null,"code"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"last_activity_at"?: string,"manager_id"?: string | null,"name"?: string,"notes"?: string | null,"parent_id"?: string | null,"postal_code"?: string | null,"president_contact"?: string | null,"president_name"?: string | null,"registered_on"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -490,6 +490,18 @@ isOneToOne: false
       columns: ["manager_id"]
 isOneToOne: false
       referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "communities_parent_id_fkey"
+      columns: ["parent_id"]
+isOneToOne: false
+      referencedRelation: "communities"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "communities_parent_id_fkey"
+      columns: ["parent_id"]
+isOneToOne: false
+      referencedRelation: "communities_view"
       referencedColumns: ["id"]
     }
                   ]
@@ -905,14 +917,14 @@ isOneToOne: false
                   ]
                 },"staff": {
                   Row: {
-                    "active": boolean,"approval_limit": number | null,"avatar_path": string | null,"created_at": string,"email": string | null,"full_name": string,"id": string,"invited_at": string | null,"phone": string | null,"position": string,"role": Database["public"]['Enums']["staff_role"],"short_name": string,"updated_at": string,"user_id": string | null
+                    "active": boolean,"approval_limit": number | null,"avatar_path": string | null,"can_edit_all": boolean,"created_at": string,"email": string | null,"full_name": string,"id": string,"invited_at": string | null,"phone": string | null,"position": string,"role": Database["public"]['Enums']["staff_role"],"short_name": string,"updated_at": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"approval_limit"?: number | null,"avatar_path"?: string | null,"created_at"?: string,"email"?: string | null,"full_name": string,"id"?: string,"invited_at"?: string | null,"phone"?: string | null,"position": string,"role"?: Database["public"]['Enums']["staff_role"],"short_name": string,"updated_at"?: string,"user_id"?: string | null
+                    "active"?: boolean,"approval_limit"?: number | null,"avatar_path"?: string | null,"can_edit_all"?: boolean,"created_at"?: string,"email"?: string | null,"full_name": string,"id"?: string,"invited_at"?: string | null,"phone"?: string | null,"position": string,"role"?: Database["public"]['Enums']["staff_role"],"short_name": string,"updated_at"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "active"?: boolean,"approval_limit"?: number | null,"avatar_path"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string,"id"?: string,"invited_at"?: string | null,"phone"?: string | null,"position"?: string,"role"?: Database["public"]['Enums']["staff_role"],"short_name"?: string,"updated_at"?: string,"user_id"?: string | null
+                    "active"?: boolean,"approval_limit"?: number | null,"avatar_path"?: string | null,"can_edit_all"?: boolean,"created_at"?: string,"email"?: string | null,"full_name"?: string,"id"?: string,"invited_at"?: string | null,"phone"?: string | null,"position"?: string,"role"?: Database["public"]['Enums']["staff_role"],"short_name"?: string,"updated_at"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     
@@ -1190,7 +1202,7 @@ isOneToOne: false
                   ]
                 },"communities_view": {
                   Row: {
-                    "active": boolean,"address": string | null,"city": string | null,"closed_incidents": number | null,"code": string,"created_at": string,"created_by": string | null,"id": string,"last_activity_at": string,"manager_id": string | null,"manager_name": string | null,"name": string,"notes": string | null,"open_incidents": number | null,"overdue_incidents": number | null,"postal_code": string | null,"president_contact": string | null,"president_name": string | null,"registered_on": string | null,"updated_at": string,"urgent_incidents": number | null
+                    "active": boolean,"address": string | null,"city": string | null,"closed_incidents": number | null,"code": string,"created_at": string,"created_by": string | null,"id": string,"last_activity_at": string,"manager_id": string | null,"manager_name": string | null,"name": string,"notes": string | null,"open_incidents": number | null,"overdue_incidents": number | null,"parent_code": string | null,"parent_id": string | null,"parent_name": string | null,"postal_code": string | null,"president_contact": string | null,"president_name": string | null,"registered_on": string | null,"subcommunities": number | null,"updated_at": string,"urgent_incidents": number | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -1205,6 +1217,18 @@ isOneToOne: false
       columns: ["manager_id"]
 isOneToOne: false
       referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "communities_parent_id_fkey"
+      columns: ["parent_id"]
+isOneToOne: false
+      referencedRelation: "communities"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "communities_parent_id_fkey"
+      columns: ["parent_id"]
+isOneToOne: false
+      referencedRelation: "communities_view"
       referencedColumns: ["id"]
     }
                   ]
@@ -1370,6 +1394,9 @@ isOneToOne: false
                            },
 "generate_reminders":
 { Args: Record<PropertyKey, never>; Returns: number
+                           },
+"has_global_edit":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "in_workflow":
 { Args: Record<PropertyKey, never>; Returns: boolean

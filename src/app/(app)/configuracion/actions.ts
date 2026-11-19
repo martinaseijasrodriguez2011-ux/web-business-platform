@@ -51,7 +51,8 @@ export async function updateStaff(staffId: string, _: ActionResult | null, fd: F
   const active = s(fd, "active") !== "false";
   if (staffId === me.id && (!active || role.data !== me.role)) return { ok: false, error: "No puede desactivarse ni cambiar su propio rol." };
   const supabase = await createClient();
-  const { data, error } = await supabase.from("staff").update({ full_name: fullName, short_name: shortName, position, role: role.data, active }).eq("id", staffId).select("id");
+  const canEditAll = fd.get("can_edit_all") === "on";
+  const { data, error } = await supabase.from("staff").update({ full_name: fullName, short_name: shortName, position, role: role.data, active, can_edit_all: canEditAll }).eq("id", staffId).select("id");
   if (error) return dbError(error);
   if (!data.length) return NO_PERMISSION;
   return done("Datos actualizados.");

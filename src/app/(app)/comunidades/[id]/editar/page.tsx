@@ -19,10 +19,11 @@ export default async function EditarComunidadPage({ params }: { params: Promise<
   const { data: canEdit } = await supabase.rpc("can_edit_community", { p_community: id });
   if (!canEdit) redirect(`/comunidades/${id}`);
   const staff = await getStaffOptions();
+  const { data: parents } = await supabase.from("communities").select("id, name, code").is("parent_id", null).eq("active", true).neq("id", id).order("name");
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader back={<Link href={`/comunidades/${id}`} className="inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"><ChevronLeft size={16} /> {c.name}</Link>} title="Editar comunidad" />
-      <CommunityForm action={updateCommunity.bind(null, id)} staff={staff} defaults={c} canAssign={isSupervisor(me)} mode="edit" cancelHref={`/comunidades/${id}`} />
+      <CommunityForm action={updateCommunity.bind(null, id)} staff={staff} defaults={c} canAssign={isSupervisor(me)} mode="edit" cancelHref={`/comunidades/${id}`} parents={parents ?? []} />
     </div>
   );
 }

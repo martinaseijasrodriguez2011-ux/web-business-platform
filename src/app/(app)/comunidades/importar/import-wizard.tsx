@@ -13,6 +13,7 @@ import { importCommunities, parseSpreadsheet, type ImportField, type ImportRowRe
 const FIELDS: { key: ImportField; label: string; hints: string[]; required?: boolean }[] = [
   { key: "name", label: "Nombre de la comunidad", hints: ["comunidad", "nombre", "nom", "finca", "edificio"], required: true },
   { key: "code", label: "Código interno", hints: ["codigo", "código", "cod", "ref", "referencia", "id"] },
+  { key: "parent", label: "Código de la comunidad general (si es subcomunidad)", hints: ["comunidad general", "general", "pertenece", "mancomunidad"] },
   { key: "manager", label: "Gestora responsable", hints: ["gestora", "gestor", "responsable", "lleva", "asignada", "administra"] },
   { key: "address", label: "Dirección", hints: ["direccion", "dirección", "domicilio", "calle", "adreça"] },
   { key: "postal_code", label: "Código postal", hints: ["cp", "postal", "c.p"] },
@@ -152,11 +153,11 @@ export function ImportWizard({ staffNames }: { staffNames: string[] }) {
           <Card>
             <CardHeader title={`3. Previsualización (${preview.length} filas)`} subtitle={withIssues ? `${withIssues} fila(s) con avisos no se importarán hasta corregirlas en el Excel.` : "Sin errores detectados."} />
             <Table className="max-h-[480px] overflow-y-auto">
-              <thead><tr><Th>Fila</Th><Th>Nombre</Th><Th>Código</Th><Th>Gestora</Th><Th>Dirección</Th><Th>Población</Th><Th>Avisos</Th></tr></thead>
+              <thead><tr><Th>Fila</Th><Th>Nombre</Th><Th>Código</Th><Th>Comunidad general</Th><Th>Gestora</Th><Th>Dirección</Th><Th>Población</Th><Th>Avisos</Th></tr></thead>
               <tbody>
                 {preview.slice(0, 300).map(({ r, issues }, i) => (
                   <tr key={i} className={issues.length ? "bg-[var(--naranja-bg)]/50" : ""}>
-                    <Td className="tabular text-ink-3">{i + 2}</Td><Td>{r.name || "—"}</Td><Td className="tabular">{r.code || <span className="text-ink-3">automático</span>}</Td>
+                    <Td className="tabular text-ink-3">{i + 2}</Td><Td>{r.name || "—"}</Td><Td className="tabular">{r.code || <span className="text-ink-3">automático</span>}</Td><Td className="tabular text-ink-2">{r.parent || "—"}</Td>
                     <Td>{r.manager || <span className="text-ink-3">sin asignar</span>}</Td><Td className="text-ink-2">{r.address || "—"}</Td><Td className="text-ink-2">{r.city || "—"}</Td>
                     <Td className="text-xs text-[var(--naranja-fg)]">{issues.join(" · ")}</Td>
                   </tr>

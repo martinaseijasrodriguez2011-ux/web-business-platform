@@ -68,7 +68,7 @@ export default async function ComunidadesPage({ searchParams }: { searchParams: 
             <tbody>
               {rows.map((c) => (
                 <tr key={c.id} className="group hover:bg-surface-2">
-                  <Td><Link href={`/comunidades/${c.id}`} className="block"><span className="font-medium text-ink group-hover:text-brand">{c.name}</span><span className="block text-xs text-ink-3">{[c.address, c.city].filter(Boolean).join(", ") || "Dirección pendiente"}</span></Link></Td>
+                  <Td><Link href={`/comunidades/${c.id}`} className="block"><span className="font-medium text-ink group-hover:text-brand">{c.name}</span><span className="block text-xs text-ink-3">{c.parent_name ? `Subcomunidad de ${c.parent_name}` : (c.subcommunities ?? 0) > 0 ? `Comunidad general · ${c.subcommunities} subcomunidades` : [c.address, c.city].filter(Boolean).join(", ") || "Dirección pendiente"}</span></Link></Td>
                   <Td className="tabular text-ink-2">{c.code}</Td>
                   <Td>{c.manager_name ?? <Badge tone="naranja">Pendiente de asignar</Badge>}</Td>
                   <Td className="tabular text-center">{c.open_incidents}</Td>

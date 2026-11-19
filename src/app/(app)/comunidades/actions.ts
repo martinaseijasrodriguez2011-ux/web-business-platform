@@ -20,13 +20,14 @@ const communitySchema = z.object({
   president_contact: z.string().max(200).nullable(),
   notes: z.string().max(5000).nullable(),
   registered_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  parent_id: z.string().uuid().nullable(),
 });
 
 function payload(fd: FormData) {
   return {
     code: s(fd, "code"), name: s(fd, "name"), address: s(fd, "address"), postal_code: s(fd, "postal_code"), city: s(fd, "city"),
     manager_id: s(fd, "manager_id"), president_name: s(fd, "president_name"), president_contact: s(fd, "president_contact"),
-    notes: s(fd, "notes"), registered_on: s(fd, "registered_on"),
+    notes: s(fd, "notes"), registered_on: s(fd, "registered_on"), parent_id: s(fd, "parent_id"),
   };
 }
 
@@ -141,7 +142,7 @@ export async function parseSpreadsheet(fd: FormData): Promise<ParseResult> {
   return { ok: true, sheets, storagePath, fileName: file.name, size: file.size };
 }
 
-const FIELDS = ["code", "name", "address", "postal_code", "city", "manager", "president_name", "president_contact", "notes"] as const;
+const FIELDS = ["code", "name", "parent", "address", "postal_code", "city", "manager", "president_name", "president_contact", "notes"] as const;
 export type ImportField = (typeof FIELDS)[number];
 export type ImportRowResult = { row: number; status: "creada" | "actualizada" | "omitida" | "error"; message: string; name?: string };
 
@@ -173,6 +174,8 @@ export async function importCommunities(input: {
 
   const results: ImportRowResult[] = [];
   let created = 0, updated = 0, skipped = 0;
+  // Subcomunidades: se vinculan al final, cuando ya existen todas las comunidades del archivo
+  const pendingParents: { row: number; name: string; id: string; parentCode: string }[] = [];
 
   for (const [idx, raw] of input.rows.entries()) {
     const rowNo = idx + 2; // fila 1 = cabecera
@@ -206,15 +209,26 @@ export async function importCommunities(input: {
       const { error } = await supabase.from("communities").update(update).eq("id", match.id);
       if (error) { results.push({ row: rowNo, status: "error", name: r.name, message: dbError(error).error! }); skipped++; continue; }
       results.push({ row: rowNo, status: "actualizada", name: r.name, message: managerId ? "Gestora y datos actualizados." : "Datos actualizados." });
+      if (r.parent) pendingParents.push({ row: rowNo, name: r.name, id: match.id, parentCode: r.parent });
       updated++;
       continue;
     }
 
     const code = r.code || `C-${String(++autoSeq).padStart(4, "0")}`;
-    const { error } = await supabase.from("communities").insert({ ...fields, code, name: r.name, manager_id: managerId ?? null });
+    const { data: ins, error } = await supabase.from("communities").insert({ ...fields, code, name: r.name, manager_id: managerId ?? null }).select("id, code, name").single();
     if (error) { results.push({ row: rowNo, status: "error", name: r.name, message: dbError(error).error! }); skipped++; continue; }
+    byCode.set(norm(ins.code), ins);
+    if (r.parent) pendingParents.push({ row: rowNo, name: r.name, id: ins.id, parentCode: r.parent });
     results.push({ row: rowNo, status: "creada", name: r.name, message: r.code ? "Creada." : `Creada con código automático ${code}.` });
     created++;
+  }
+
+  for (const p of pendingParents) {
+    const parent = byCode.get(norm(p.parentCode));
+    const res = results.find((x) => x.row === p.row)!;
+    if (!parent) { res.message += ` Aviso: no existe la comunidad general con código «${p.parentCode}»; no se ha vinculado.`; continue; }
+    const { error } = await supabase.from("communities").update({ parent_id: parent.id }).eq("id", p.id);
+    res.message += error ? ` Aviso: no se pudo vincular a ${parent.name} (${dbError(error).error}).` : ` Vinculada como subcomunidad de ${parent.name}.`;
   }
 
   let documentId: string | null = null;

@@ -270,6 +270,28 @@ test("Panel · estadísticas y recordatorios", async () => {
   assert.ifError(r.error);
 });
 
+test("Edición global · Santi edita incidencias de otra gestora, pero no paga ni asigna gestoras", async () => {
+  await ensureUser("Santi", "santi@prueba.local");
+  const santi = await login("santi@prueba.local");
+  const { data: inc } = await santi.from("incidents").update({ notes: "Gestionado por Santi" }).eq("id", incidentId).select("id");
+  assert.equal(inc.length, 1, "puede editar incidencias de cualquier comunidad");
+  const { error } = await santi.from("communities").update({ manager_id: await staffId("Santi") }).eq("id", communityId);
+  assert.ok(error, "no puede asignar gestoras");
+  const r = await santi.rpc("confirm_payment", { p_invoice: invoiceId, p_amount: 1, p_paid_on: "2026-11-18" });
+  assert.ok(r.error, "no puede confirmar pagos");
+  const { data: cfg } = await santi.from("app_settings").update({ inactivity_days: 3 }).eq("id", true).select();
+  assert.equal(cfg.length, 0, "no puede tocar la configuración");
+});
+
+test("Subcomunidades · un solo nivel y vínculo con la comunidad general", async () => {
+  const { data: parent } = await silvia.from("communities").insert({ code: `G-${T}`, name: `General ${T}` }).select().single();
+  const { data: sub } = await silvia.from("communities").insert({ code: `G-${T}-A`, name: `Sub A ${T}`, parent_id: parent.id }).select().single();
+  const { error } = await silvia.from("communities").insert({ code: `G-${T}-A1`, name: `Sub A1 ${T}`, parent_id: sub.id });
+  assert.ok(error, "no se permiten subcomunidades de subcomunidades");
+  const { data: v } = await eva.from("communities_view").select("subcommunities").eq("id", parent.id).single();
+  assert.equal(v.subcommunities, 1);
+});
+
 test("Prueba 4 · no existe registro público de usuarios", async () => {
   const { createClient } = await import("@supabase/supabase-js");
   const { URL_, ANON } = await import("./helpers.mjs");
