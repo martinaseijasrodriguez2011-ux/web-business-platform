@@ -13,6 +13,7 @@ import type { Staff } from "@/lib/types";
 export async function ProfileView({ staff, showLimit }: { staff: Staff; showLimit: boolean }) {
   const supabase = await createClient();
   const today = hoyISO();
+  const { data: limitsOn } = await supabase.rpc("limits_enabled");
   const [{ data: comms }, { data: inc }, { data: tasks }, { data: budgets }, { data: activity }] = await Promise.all([
     supabase.from("communities_view").select("id, name, code, open_incidents").eq("manager_id", staff.id).eq("active", true).order("name"),
     supabase.from("incidents_view").select("id, code, title, status, priority, is_open, is_overdue, community_name, due_on").eq("manager_id", staff.id).order("created_at", { ascending: false }),
@@ -40,7 +41,7 @@ export async function ProfileView({ staff, showLimit }: { staff: Staff; showLimi
             <p className="text-ink-3">{staff.position}</p>
             <div className="mt-1 flex flex-wrap gap-1.5"><Badge tone={staff.role === "gestora" ? "gris" : "violeta"} dot={false}>{ROLE[staff.role]}</Badge>{!staff.active && <Badge tone="gris">Desactivado</Badge>}</div>
           </div>
-          {showLimit && <div className="ml-auto rounded-lg bg-surface-2 px-4 py-3 text-sm"><p className="text-ink-3">Límite de aprobación</p><p className="tabular font-semibold">{staff.role !== "gestora" ? "Autorización superior" : staff.approval_limit != null ? euros(staff.approval_limit) : "Pendiente de configurar"}</p></div>}
+          {showLimit && <div className="ml-auto rounded-lg bg-surface-2 px-4 py-3 text-sm"><p className="text-ink-3">Límite de aprobación</p><p className="tabular font-semibold">{staff.role !== "gestora" ? "Autorización superior" : !limitsOn ? "Sin límite" : staff.approval_limit != null ? euros(staff.approval_limit) : "Pendiente de configurar"}</p></div>}
         </div>
       </Card>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

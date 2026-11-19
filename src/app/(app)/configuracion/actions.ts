@@ -82,6 +82,18 @@ export async function setApprovalLimit(staffId: string, _: ActionResult | null, 
   return done(value === null ? "Límite marcado como pendiente de configurar." : "Límite actualizado. El cambio queda registrado.");
 }
 
+export async function saveApprovalSettings(_: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  await requireSupervisor();
+  const enabled = s(fd, "approval_limits_enabled") === "true";
+  const raw = s(fd, "approval_alert_threshold");
+  const threshold = raw === null ? null : money(fd, "approval_alert_threshold");
+  if (threshold !== null && (Number.isNaN(threshold) || threshold < 0)) return { ok: false, error: "Importe de aviso no válido." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("app_settings").update({ approval_limits_enabled: enabled, approval_alert_threshold: threshold, updated_at: new Date().toISOString() }).eq("id", true);
+  if (error) return dbError(error);
+  return done(enabled ? "Se aplican los límites individuales." : threshold === null ? "Sin límite. Se avisará de todas las aprobaciones." : "Sin límite. Se avisará de las aprobaciones a partir del importe indicado.");
+}
+
 /* ---------- Categorías ---------- */
 export async function addCategory(_: ActionResult | null, fd: FormData): Promise<ActionResult> {
   await requireSupervisor();

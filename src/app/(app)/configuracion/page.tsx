@@ -12,13 +12,13 @@ import { createClient } from "@/lib/supabase/server";
 import { corporateUrl } from "@/lib/storage";
 import { euros, fechaHora } from "@/lib/format";
 import { ROLE } from "@/lib/labels";
-import { addCategory, addStaff, addTemplate, inviteStaff, saveSettings, saveTemplateItems, setApprovalLimit, updateCategory, updateStaff, updateStatusLabel } from "./actions";
+import { saveApprovalSettings, addCategory, addStaff, addTemplate, inviteStaff, saveSettings, saveTemplateItems, setApprovalLimit, updateCategory, updateStaff, updateStatusLabel } from "./actions";
 import { LogoUploader } from "./logo-uploader";
 
 export const metadata = { title: "Configuración" };
 
 const TABS = [
-  { key: "usuarios", label: "Usuarios" }, { key: "limites", label: "Límites económicos" }, { key: "categorias", label: "Categorías" },
+  { key: "usuarios", label: "Usuarios" }, { key: "limites", label: "Aprobación de presupuestos" }, { key: "categorias", label: "Categorías" },
   { key: "estados", label: "Estados" }, { key: "plantillas", label: "Plantillas" }, { key: "general", label: "Datos generales" },
   { key: "importaciones", label: "Importaciones" }, { key: "auditoria", label: "Auditoría" },
 ];
@@ -93,14 +93,35 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
   }
 
   async function Limites() {
-    const [{ data: staff }, { data: history }] = await Promise.all([
+    const [{ data: st }, { data: staff }, { data: history }] = await Promise.all([
+      supabase.from("app_settings").select("approval_limits_enabled, approval_alert_threshold").single(),
       supabase.from("staff").select("id, full_name, role, approval_limit, active").order("role").order("short_name"),
       supabase.from("approval_limit_history").select("*, staff:staff!approval_limit_history_staff_id_fkey(full_name), changer:staff!approval_limit_history_changed_by_fkey(full_name)").order("changed_at", { ascending: false }).limit(50),
     ]);
+    const enabled = !!st?.approval_limits_enabled;
     return (
+      <div className="space-y-6">
+      <Card>
+        <CardHeader title="Cómo se aprueban los presupuestos" subtitle="Quién aprueba queda siempre registrado, igual que la autorización del presidente. Los pagos solo los confirman Dirección y Coordinación." />
+        <CardBody>
+          <ActionFormInline action={saveApprovalSettings}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Modalidad" htmlFor="approval_limits_enabled">
+                <Select id="approval_limits_enabled" name="approval_limits_enabled" defaultValue={enabled ? "true" : "false"}>
+                  <option value="false">Sin límite: la gestora responsable aprueba cualquier importe</option>
+                  <option value="true">Con límite individual: por encima, requiere autorización superior</option>
+                </Select>
+              </Field>
+              <Field label="Avisar a Dirección y Coordinación a partir de (€, IVA incluido)" htmlFor="approval_alert_threshold" hint="Vacío = se avisa de todas las aprobaciones hechas por el equipo.">
+                <Input id="approval_alert_threshold" name="approval_alert_threshold" inputMode="decimal" defaultValue={st?.approval_alert_threshold ?? ""} placeholder="Pendiente de configurar" />
+              </Field>
+            </div>
+          </ActionFormInline>
+        </CardBody>
+      </Card>
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardHeader title="Límite individual de aprobación" subtitle="Importe total (IVA incluido) hasta el que cada gestora puede aprobar presupuestos. Si se supera o está pendiente de configurar, se requiere autorización superior." />
+        <Card className={enabled ? "" : "opacity-60"}>
+          <CardHeader title="Límite individual de aprobación" subtitle={enabled ? "Importe total (IVA incluido) hasta el que cada gestora puede aprobar presupuestos. Si se supera o está pendiente de configurar, se requiere autorización superior." : "No se aplican: la modalidad actual es «sin límite». Se conservan por si se activan en el futuro."} />
           <Table>
             <thead><tr><Th>Persona</Th><Th className="text-right">Límite actual</Th><Th></Th></tr></thead>
             <tbody>{(staff ?? []).filter((s) => s.active).map((s) => (
@@ -123,6 +144,7 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
               <tbody>{history.map((h) => <tr key={h.id}><Td className="text-xs">{fechaHora(h.changed_at)}</Td><Td>{h.staff?.full_name}</Td><Td className="tabular text-right">{h.old_limit != null ? euros(h.old_limit) : "Pendiente"}</Td><Td className="tabular text-right">{h.new_limit != null ? euros(h.new_limit) : "Pendiente"}</Td><Td className="text-ink-2">{h.changer?.full_name ?? "Sistema"}</Td></tr>)}</tbody>
             </Table>)}
         </Card>
+      </div>
       </div>
     );
   }

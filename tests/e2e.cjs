@@ -141,24 +141,20 @@ async function step(name, fn) {
     await dialog(eva).getByRole("button", { name: "Registrar" }).click();
     await eva.getByText("Autorización del presidente", { exact: true }).first().waitFor();
 
-    // Silvia fija a Eva un límite inferior al importe
+    // Modalidad acordada: sin límite, con aviso a Dirección/Coordinación desde 1.000 €
     await silvia.goto(`${BASE}/configuracion?tab=limites`);
-    const row = silvia.locator("tr", { hasText: "Eva" }).first();
-    await row.getByRole("button", { name: "Modificar" }).click();
-    await dialog(silvia).locator("input[name=approval_limit]").fill("500");
-    await dialog(silvia).getByRole("button", { name: "Guardar" }).click();
-    await silvia.getByText("500,00 €").first().waitFor();
+    await silvia.selectOption("#approval_limits_enabled", "false");
+    await silvia.fill("#approval_alert_threshold", "1000");
+    await silvia.getByRole("button", { name: "Guardar" }).first().click();
+    await silvia.getByText("Sin límite. Se avisará de las aprobaciones a partir del importe indicado.").waitFor();
 
     await eva.goto(budgetUrl);
-    assert.equal(await eva.getByRole("button", { name: "Aprobar presupuesto" }).count(), 0, "no puede aprobar por encima de su límite");
-    await eva.getByRole("button", { name: "Solicitar autorización superior" }).click();
-    await dialog(eva).getByRole("button", { name: "Enviar solicitud" }).click();
-    await eva.getByText("Pendiente de autorización por Dirección o Coordinación.").waitFor();
+    await eva.getByRole("button", { name: "Aprobar presupuesto" }).click();
+    await dialog(eva).getByRole("button", { name: "Confirmar aprobación" }).click();
+    await eva.getByText("Aprobación de la gestora").first().waitFor();
 
-    await begona.goto(budgetUrl);
-    await begona.getByRole("button", { name: "Conceder autorización superior" }).click();
-    await dialog(begona).getByRole("button", { name: "Confirmar aprobación" }).click();
-    await begona.getByText("Autorización superior (Dirección/Coordinación)").first().waitFor();
+    await begona.goto(`${BASE}/notificaciones`);
+    assert.ok(await begona.getByText(/Presupuesto aprobado por Eva/).first().isVisible(), "aviso a Coordinación");
   });
 
   await step("Prueba 3 · factura pendiente; gestora no puede pagar; Silvia confirma el pago", async () => {

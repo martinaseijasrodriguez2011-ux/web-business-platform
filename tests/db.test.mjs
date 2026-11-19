@@ -114,6 +114,8 @@ test("Prueba 2 · no se puede aprobar por UPDATE directo", async () => {
 
 test("Prueba 2 · límite pendiente de configurar o superado obliga a autorización superior", async () => {
   const evaId = await staffId("Eva");
+  // Modalidad «con límites individuales» (la configurada por defecto es «sin límite»)
+  await admin.from("app_settings").update({ approval_limits_enabled: true }).eq("id", true);
   await admin.from("staff").update({ approval_limit: null }).eq("id", evaId);
   let r = await eva.rpc("approve_budget", { p_budget: budgetId });
   assert.match(r.error?.message ?? "", /LIMITE_NO_CONFIGURADO/);
@@ -170,6 +172,23 @@ test("Prueba 2 · dentro del límite, la gestora aprueba", async () => {
   const r = await eva.rpc("approve_budget", { p_budget: data.id });
   assert.ifError(r.error);
   assert.equal(r.data.kind, "aprobacion_interna");
+});
+
+test("Aprobación sin límite · la gestora aprueba cualquier importe y se avisa a supervisión según el umbral", async () => {
+  await admin.from("app_settings").update({ approval_limits_enabled: false, approval_alert_threshold: 5000 }).eq("id", true);
+  await admin.from("staff").update({ approval_limit: null }).eq("short_name", "Eva");
+  const mk = async (base) => (await eva.from("budgets").insert({ incident_id: incidentId, concept: `Sin límite ${base}`, base_amount: base, vat_rate: 21, status: "recibido" }).select().single()).data;
+  const small = await mk(1000);  // 1.210 € < umbral → sin aviso
+  const big = await mk(10000);   // 12.100 € ≥ umbral → aviso
+  for (const b of [small, big]) { const r = await eva.rpc("approve_budget", { p_budget: b.id }); assert.ifError(r.error); assert.equal(r.data.kind, "aprobacion_interna"); }
+  const { data: n } = await admin.from("notifications").select("link, recipient_id").eq("kind", "presupuesto_aprobado_aviso");
+  assert.ok(!n.some((x) => x.link.endsWith(small.id)), "por debajo del umbral no se avisa");
+  assert.equal(n.filter((x) => x.link.endsWith(big.id)).length, 2, "aviso a Silvia y a Begoña");
+  // Pilar (no responsable) sigue sin poder aprobar presupuestos de otra gestora
+  const other = await mk(50);
+  const r = await pilar.rpc("approve_budget", { p_budget: other.id });
+  assert.ok(r.error);
+  await admin.from("app_settings").update({ approval_alert_threshold: null }).eq("id", true);
 });
 
 let invoiceId;

@@ -67,7 +67,7 @@ export const ROLE: Record<string, string> = {
 
 export const AUTH_KIND: Record<string, string> = {
   presidente: "Autorización del presidente",
-  aprobacion_interna: "Aprobación interna (dentro del límite)",
+  aprobacion_interna: "Aprobación de la gestora",
   autorizacion_superior: "Autorización superior (Dirección/Coordinación)",
 };
 

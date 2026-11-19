@@ -25,8 +25,9 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
   if (sp.comunidad) q = q.eq("community_id", sp.comunidad);
   if (sp.proveedor) q = q.eq("provider_id", sp.proveedor);
   if (sp.gestora) q = q.eq("responsible_id", sp.gestora);
-  const [{ data }, communities, providers, staff, { data: all }] = await Promise.all([
+  const [{ data }, communities, providers, staff, { data: all }, { data: limits }] = await Promise.all([
     q, getCommunityOptions(), getProviderOptions(), getStaffOptions(), supabase.from("budgets").select("status, requires_superior"),
+    supabase.rpc("limits_enabled"),
   ]);
   const count = (k: string) => (all ?? []).filter((b) => (k === "superior" ? b.requires_superior && b.status === "pendiente_autorizacion" : b.status === k)).length;
   const chips = [["", "Todos", (all ?? []).length], ["solicitado", "Solicitados", count("solicitado")], ["recibido", "Recibidos", count("recibido")],
@@ -36,7 +37,7 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
 
   return (
     <div>
-      <PageHeader title="Presupuestos" subtitle={`Solicitud, comparación, autorización y aprobación de presupuestos.${isSupervisor(me) ? "" : ` Su límite de aprobación: ${me.approval_limit != null ? euros(me.approval_limit) : "pendiente de configurar"}.`}`}
+      <PageHeader title="Presupuestos" subtitle={`Solicitud, comparación, autorización y aprobación de presupuestos.${isSupervisor(me) || !limits ? "" : ` Su límite de aprobación: ${me.approval_limit != null ? euros(me.approval_limit) : "pendiente de configurar"}.`}`}
         actions={<ButtonLink href="/presupuestos/nuevo"><Plus size={16} /> Nuevo presupuesto</ButtonLink>} />
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {chips.map(([k, label, n]) => (
