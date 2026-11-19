@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
 /*
- * Identidad visual de AR Incidencias.
- * La paleta corporativa oficial de Altayó & Rodríguez está pendiente de
- * incorporar (la web no fue accesible al desarrollar). El color principal se
- * puede sustituir desde Configuración → Datos generales (variable --brand).
+ * Identidad visual de AR Incidencias, tomada del logotipo de Altayó & Rodríguez:
+ *   rojo #c72c2e · gris oscuro #646464 · gris claro #cccccc
+ * El color de interfaz (--brand) es el gris del logotipo oscurecido para
+ * garantizar el contraste del texto blanco en botones. El rojo corporativo se
+ * reserva para la marca (--brand-accent) y no se usa en botones, para no
+ * confundirlo con el rojo de «urgente» o «atrasada».
  */
 :root {
-  --brand: #1f3a5f;          /* azul institucional sobrio (provisional) */
+  --brand: #3f3f3f;
+  --brand-accent: #c72c2e;
+  --brand-gray: #646464;
+  --brand-light: #cccccc;
   --brand-ink: #ffffff;
   --brand-soft: color-mix(in srgb, var(--brand) 8%, white);
 
@@ -31,6 +36,8 @@
 @theme inline {
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-gray: var(--brand-gray);
   --color-brand-soft: var(--brand-soft);
   --color-bg: var(--bg);
   --color-surface: var(--surface);

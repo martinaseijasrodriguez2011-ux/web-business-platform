@@ -14,13 +14,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { error } = await searchParams;
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="hidden flex-col justify-between bg-brand p-10 text-white lg:flex">
-        <Brand inverted />
+      <section className="relative hidden flex-col justify-between border-r border-line bg-white p-10 lg:flex">
+        <span className="absolute inset-x-0 top-0 h-1 bg-brand-accent" aria-hidden />
+        <Brand size="lg" />
         <div className="max-w-md">
-          <p className="text-3xl font-semibold leading-tight tracking-tight">Organización, seguimiento y control. Todo en un mismo lugar.</p>
-          <p className="mt-4 text-white/75">Plataforma interna de gestión de comunidades, incidencias, presupuestos y control económico.</p>
+          <p className="text-3xl font-semibold leading-tight tracking-tight text-ink">Organización, seguimiento y control. <span className="text-brand-accent">Todo en un mismo lugar.</span></p>
+          <p className="mt-4 text-ink-2">Plataforma interna de gestión de comunidades, incidencias, presupuestos y control económico.</p>
         </div>
-        <p className="text-xs text-white/60">Acceso exclusivo para el equipo de Altayó &amp; Rodríguez.</p>
+        <p className="text-xs text-ink-3">Acceso exclusivo para el equipo de Altayó &amp; Rodríguez.</p>
       </section>
       <section className="flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">

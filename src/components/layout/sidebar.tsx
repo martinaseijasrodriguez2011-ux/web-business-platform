@@ -53,7 +53,7 @@ export function Sidebar({
 
   const content = (isCollapsed: boolean) => (
     <div className="flex h-full flex-col">
-      <div className={cx("flex h-16 items-center border-b border-line", isCollapsed ? "justify-center px-2" : "px-4")}>
+      <div className={cx("flex h-16 items-center border-b border-line", isCollapsed ? "justify-center px-2" : "px-4")} style={{ boxShadow: "inset 0 3px 0 var(--brand-accent)" }}>
         <Link href="/" aria-label="Inicio"><Brand collapsed={isCollapsed} logoUrl={logoUrl} /></Link>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2" aria-label="Menú principal">

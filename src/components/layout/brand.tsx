@@ -1,26 +1,27 @@
 import { cx } from "@/components/ui/cx";
 
+export const DEFAULT_LOGO = "/brand/logo-altayo-rodriguez.jpg";
+
 /**
- * Marca de la aplicación. Si se ha cargado el logotipo oficial en
- * Configuración, se muestra tal cual; si no, se usa el monograma provisional.
+ * Marca de la aplicación con el logotipo oficial de Altayó & Rodríguez,
+ * mostrado sin modificar. Si Dirección sube otra versión en Configuración,
+ * se usa esa. En el menú contraído se muestra el monograma.
  */
-export function Brand({ logoUrl, collapsed, inverted, className }: { logoUrl?: string | null; collapsed?: boolean; inverted?: boolean; className?: string }) {
+export function Brand({ logoUrl, collapsed, className, size = "md" }: { logoUrl?: string | null; collapsed?: boolean; className?: string; size?: "md" | "lg" }) {
+  if (collapsed) {
+    return (
+      <div className={cx("flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-white text-sm font-bold tracking-tight", className)} aria-label="AR Incidencias · Altayó & Rodríguez">
+        <span className="text-brand-accent">A</span><span className="text-brand-gray">R</span>
+      </div>
+    );
+  }
   return (
     <div className={cx("flex items-center gap-3", className)}>
-      {logoUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={logoUrl} alt="Altayó & Rodríguez" className={cx("object-contain", collapsed ? "h-8 w-8" : "h-9 max-w-[140px]")} />
-      ) : (
-        <div className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold tracking-tight", inverted ? "bg-white text-brand" : "bg-brand text-white")}>
-          AR
-        </div>
-      )}
-      {!collapsed && (
-        <div className="min-w-0 leading-tight">
-          <div className={cx("text-[15px] font-semibold tracking-tight", inverted ? "text-white" : "text-ink")}>AR Incidencias</div>
-          <div className={cx("text-xs", inverted ? "text-white/70" : "text-ink-3")}>Altayó &amp; Rodríguez</div>
-        </div>
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={logoUrl || DEFAULT_LOGO} alt="Altayó & Rodríguez" className={cx("w-auto object-contain", size === "lg" ? "h-20" : "h-10")} />
+      <span className={cx("border-l border-line pl-3 font-semibold leading-tight tracking-tight text-brand-gray", size === "lg" ? "text-lg" : "text-[13px]")}>
+        AR<br />Incidencias
+      </span>
     </div>
   );
 }

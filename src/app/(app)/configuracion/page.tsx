@@ -230,7 +230,7 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
             <ActionFormInline action={saveSettings}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Nombre de la empresa" htmlFor="company_name"><Input id="company_name" name="company_name" defaultValue={st?.company_name ?? ""} /></Field>
-                <Field label="Color principal (#RRGGBB)" htmlFor="primary_color" hint="Pendiente de configurar con la paleta oficial. Vacío = color provisional."><Input id="primary_color" name="primary_color" defaultValue={st?.primary_color ?? ""} placeholder="#1f3a5f" /></Field>
+                <Field label="Color principal (#RRGGBB)" htmlFor="primary_color" hint="Vacío = gris corporativo del logotipo (#3f3f3f). Evite el rojo: se reserva para urgencias."><Input id="primary_color" name="primary_color" defaultValue={st?.primary_color ?? ""} placeholder="#3f3f3f" /></Field>
                 <Field label="IVA por defecto (%)" htmlFor="default_vat_rate" hint="Se propone al crear presupuestos y facturas; siempre editable."><Input id="default_vat_rate" name="default_vat_rate" inputMode="decimal" defaultValue={Number(st?.default_vat_rate ?? 21)} /></Field>
                 <Field label="Aviso por inactividad (días)" htmlFor="inactivity_days"><Input id="inactivity_days" name="inactivity_days" type="number" min={1} max={90} defaultValue={st?.inactivity_days ?? 7} /></Field>
                 <Field label="Aviso de vencimiento (días antes)" htmlFor="due_soon_days"><Input id="due_soon_days" name="due_soon_days" type="number" min={0} max={30} defaultValue={st?.due_soon_days ?? 2} /></Field>

@@ -4,8 +4,9 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Report } from "@/lib/reports";
 import { euros, fechaHora } from "@/lib/format";
+import { LOGO_JPEG_BASE64, LOGO_SIZE } from "@/lib/brand-logo";
 
-const BRAND = "1F3A5F";
+const BRAND = "3F3F3F";
 
 /** Libro Excel con identidad, fecha de generación y filtros aplicados. */
 export async function reportToXlsx(report: Report, company: string, author: string) {
@@ -52,11 +53,12 @@ export function reportToPdf(report: Report, company: string, author: string) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const header = () => {
-    doc.setFillColor(31, 58, 95); doc.rect(0, 0, w, 14, "F");
-    doc.setTextColor(255, 255, 255); doc.setFontSize(11); doc.setFont("helvetica", "bold");
-    doc.text(`${company} · AR Incidencias`, 10, 9);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-    doc.text(`Generado el ${fechaHora(new Date())} por ${author}`, w - 10, 9, { align: "right" });
+    // Logotipo oficial (proporción original) y filete en rojo corporativo
+    doc.addImage(LOGO_JPEG_BASE64, "JPEG", 10, 3, 31, (31 * LOGO_SIZE.height) / LOGO_SIZE.width);
+    doc.setDrawColor(199, 44, 46); doc.setLineWidth(0.6); doc.line(10, 15, w - 10, 15);
+    doc.setTextColor(100, 100, 100); doc.setFontSize(8); doc.setFont("helvetica", "normal");
+    doc.text(`${company} · AR Incidencias`, w - 10, 7, { align: "right" });
+    doc.text(`Generado el ${fechaHora(new Date())} por ${author}`, w - 10, 11.5, { align: "right" });
     doc.setTextColor(17, 24, 39);
   };
   header();
@@ -75,7 +77,7 @@ export function reportToPdf(report: Report, company: string, author: string) {
     if (!s.rows.length) { doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(107, 114, 128); doc.text("Sin registros.", 10, y + 5); y += 12; continue; }
     autoTable(doc, {
       startY: y + 2, head: [s.columns], body: s.rows.map((r) => r.map((v, i) => (s.numeric?.includes(i) && typeof v === "number" ? euros(v) : String(v)))),
-      styles: { fontSize: 7.5, cellPadding: 1.5, overflow: "linebreak" }, headStyles: { fillColor: [31, 58, 95] }, alternateRowStyles: { fillColor: [249, 250, 251] },
+      styles: { fontSize: 7.5, cellPadding: 1.5, overflow: "linebreak" }, headStyles: { fillColor: [63, 63, 63] }, alternateRowStyles: { fillColor: [249, 250, 251] },
       columnStyles: Object.fromEntries((s.numeric ?? []).map((i) => [i, { halign: "right" as const }])), margin: { left: 10, right: 10, top: 18 },
       didDrawPage: () => header(),
     });

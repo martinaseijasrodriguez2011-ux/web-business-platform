@@ -24,7 +24,7 @@ export async function GET() {
     { header: "Observaciones", key: "notes", width: 40 },
   ];
   ws.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-  ws.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F3A5F" } };
+  ws.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF3F3F3F" } };
   ws.views = [{ state: "frozen", ySplit: 1 }];
   const names = (staff ?? []).map((s) => s.full_name);
   // Lista desplegable con los nombres del equipo en la columna "Gestora"
