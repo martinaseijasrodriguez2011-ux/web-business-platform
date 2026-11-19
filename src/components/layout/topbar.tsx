@@ -21,8 +21,8 @@ export function Topbar({ unread }: { unread: number }) {
             <Bell size={20} strokeWidth={1.8} />
             {unread > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[var(--rojo-dot)]" />}
           </Link>
-          <ButtonLink href="/incidencias/nueva" className="hidden sm:inline-flex"><Plus size={16} /> Nueva incidencia</ButtonLink>
-          <ButtonLink href="/incidencias/nueva" className="sm:hidden" aria-label="Nueva incidencia"><Plus size={18} /></ButtonLink>
+          <span className="hidden sm:block"><ButtonLink href="/incidencias/nueva"><Plus size={16} /> Nueva incidencia</ButtonLink></span>
+          <span className="sm:hidden"><ButtonLink href="/incidencias/nueva" aria-label="Nueva incidencia"><Plus size={18} /></ButtonLink></span>
         </div>
       </div>
     </header>

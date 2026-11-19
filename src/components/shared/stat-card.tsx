@@ -17,7 +17,7 @@ export function StatCard({ label, value, icon: Icon, tone = "gris", href, emphas
       <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", tones[tone])}><Icon size={20} /></span>
       <span className="min-w-0">
         <span className="tabular block text-2xl font-semibold leading-tight text-ink">{value}</span>
-        <span className="block truncate text-xs text-ink-3 group-hover:text-ink-2">{label}</span>
+        <span className="block text-xs leading-tight text-ink-3 group-hover:text-ink-2">{label}</span>
       </span>
     </Link>
   );
