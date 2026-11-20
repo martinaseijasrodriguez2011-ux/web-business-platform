@@ -12,8 +12,10 @@ ANON=$(curl -fsS -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN:-proxy-inject
 trap '[ -f .env.local.desplegando ] && mv .env.local.desplegando .env.local' EXIT
 rm -rf .next .netlify/static .netlify/functions-internal .netlify/edge-functions .netlify/edge-functions-dist
 export NODE_USE_ENV_PROXY=1
+# Vincula la carpeta al sitio (la opción --site no localiza el sitio por id)
+NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-proxy-injected}" $NETLIFY link --id "$SITE_ID" >/dev/null
 NEXT_PUBLIC_SUPABASE_URL="https://$REF.supabase.co" NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON" \
 NEXT_PUBLIC_SITE_URL="https://ar-incidencias.netlify.app" $NETLIFY build --offline --context production
 if grep -rqs "127.0.0.1:54321" .next/static; then echo "La compilación contiene la URL local. Se cancela." >&2; exit 1; fi
 NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-proxy-injected}" $NETLIFY deploy --prod --no-build --dir .netlify/static \
-  --site "$SITE_ID" --message "${1:-Actualización}"
+  --message "${1:-Actualización}"

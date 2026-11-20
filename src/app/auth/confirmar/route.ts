@@ -1,13 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { env } from "@/lib/env";
 
 /**
  * Confirma enlaces de invitación y de recuperación (token_hash) y lleva a la
  * pantalla para establecer contraseña. Solo redirige a rutas internas.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
+  // Siempre la dirección oficial: en Netlify la petición puede llegar con la
+  // dirección interna de la publicación (…--ar-incidencias.netlify.app).
+  const origin = env.siteUrl;
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
