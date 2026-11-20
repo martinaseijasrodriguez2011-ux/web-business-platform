@@ -1,5 +1,27 @@
 {
   "ciudades": [
+    "Gavà",
+    "Castelldefels",
+    "Viladecans",
+    "Sant Boi de Llobregat",
+    "El Prat de Llobregat",
+    "L'Hospitalet de Llobregat",
+    "Cornellà de Llobregat",
+    "Esplugues de Llobregat",
+    "Sant Just Desvern",
+    "Sant Feliu de Llobregat",
+    "Molins de Rei",
+    "Badalona",
+    "Santa Coloma de Gramenet",
+    "Mataró",
+    "Sitges",
+    "Vilanova i la Geltrú",
+    {
+      "nombre": "Sarrià - Sant Gervasi",
+      "regex": "Sarrià ?- ?Sant Gervasi",
+      "nivel": "9",
+      "etiqueta": "Sarrià-Sant Gervasi"
+    },
     "Barcelona",
     "Sant Cugat del Vallès",
     "Sabadell",

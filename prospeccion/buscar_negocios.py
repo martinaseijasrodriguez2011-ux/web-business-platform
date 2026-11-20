@@ -142,7 +142,16 @@ GRUPOS = {
 # --------------------------------------------------------------------------- #
 # Obtención de datos
 # --------------------------------------------------------------------------- #
-def construir_consulta(ciudad: str, admin_level: str) -> str:
+def zona(c, admin_level: str = "8") -> dict:
+    """Una zona de config.json: texto («Gavà») u objeto {nombre, regex, nivel, etiqueta}."""
+    if isinstance(c, str):
+        return {"nombre": c, "regex": re.escape(c).replace("\\ ", " "), "nivel": admin_level, "etiqueta": c}
+    return {"nombre": c["nombre"], "regex": c.get("regex") or re.escape(c["nombre"]).replace("\\ ", " "),
+            "nivel": str(c.get("nivel", admin_level)), "etiqueta": c.get("etiqueta", c["nombre"])}
+
+
+def construir_consulta(ciudad, admin_level: str) -> str:
+    z = zona(ciudad, admin_level)
     por_clave: dict[str, list[str]] = {}
     for clave, valor in CATEGORIAS:
         por_clave.setdefault(clave, []).append(valor)
@@ -151,10 +160,10 @@ def construir_consulta(ciudad: str, admin_level: str) -> str:
     for clave, valores in por_clave.items():
         regex = "|".join(sorted(set(valores)))
         bloques.append(f'  nwr(area.a)["{clave}"~"^({regex})$"]["name"]{sin_web};')
-    ciudad_escapada = ciudad.replace('"', '\\"')
+    ciudad_escapada = z["regex"].replace("\\", "\\\\").replace('"', '\\"')
     return (
         "[out:json][timeout:180];\n"
-        f'area["name"="{ciudad_escapada}"]["boundary"="administrative"]["admin_level"="{admin_level}"]->.a;\n'
+        f'area["name"~"^{ciudad_escapada}$",i]["boundary"="administrative"]["admin_level"="{z["nivel"]}"]->.a;\n'
         "(\n" + "\n".join(bloques) + "\n);\n"
         "out center meta;"
     )
@@ -661,7 +670,7 @@ def main() -> int:
         n = min(cfg.get("ciudades_por_dia", 3), len(todas))
         inicio = (dt.date.fromisoformat(a.fecha).toordinal() * n) % len(todas)
         ciudades = [todas[(inicio + i) % len(todas)] for i in range(n)]
-    print(f"Ciudades de hoy: {', '.join(ciudades)}", file=sys.stderr)
+    print(f"Ciudades de hoy: {', '.join(zona(c)['etiqueta'] for c in ciudades)}", file=sys.stderr)
     negocios: list[dict] = []
     for ciudad in ciudades:
         if a.desde_json:
@@ -673,8 +682,8 @@ def main() -> int:
             except RuntimeError as e:
                 print(f"  Error en {ciudad}, se omite: {e}", file=sys.stderr)
                 continue
-        encontrados = extraer_negocios(osm, ciudad)
-        print(f"  {ciudad}: {len(encontrados)} negocios con teléfono y sin web", file=sys.stderr)
+        encontrados = extraer_negocios(osm, zona(ciudad)["etiqueta"])
+        print(f"  {zona(ciudad)['etiqueta']}: {len(encontrados)} negocios con teléfono y sin web", file=sys.stderr)
         negocios += encontrados
 
     print(f"Negocios con teléfono y sin web en OSM: {len(negocios)}", file=sys.stderr)

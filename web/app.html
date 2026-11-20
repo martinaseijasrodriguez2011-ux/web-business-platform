@@ -152,14 +152,18 @@ let diaSel=null, filtro="todos";
 const hoyISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
 const ordinal=f=>{const [y,m,d]=f.split("-").map(Number);return Date.UTC(y,m-1,d)/86400000+719163};
 const fechaLarga=f=>{const d=new Date(f+"T12:00:00");return `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`};
-function ciudadesDeHoy(f){const t=D.config.ciudades,n=Math.min(D.config.ciudades_por_dia||3,t.length),i=(ordinal(f)*n)%t.length;return Array.from({length:n},(_,k)=>t[(i+k)%t.length])}
+// Zonas: texto ("Gavà") o {nombre, nivel, etiqueta} para distritos/barrios (p. ej. Sarrià, nivel 9 en Barcelona).
+const ZONAS={};D.config.ciudades.forEach(c=>{const z=typeof c==="string"?{nombre:c}:c;ZONAS[z.etiqueta||z.nombre]={nombre:z.nombre,regex:z.regex,nivel:String(z.nivel||D.config.admin_level||"8")}});
+const LISTA_ZONAS=Object.keys(ZONAS);
+const escRe=t=>t.replace(/[.*+?^${}()|[\]\\]/g,"\\\\$&").replace(/"/g,'\\"');
+function ciudadesDeHoy(f){const t=LISTA_ZONAS,n=Math.min(D.config.ciudades_por_dia||3,t.length),i=(ordinal(f)*n)%t.length;return Array.from({length:n},(_,k)=>t[(i+k)%t.length])}
 
 /* ---------- Overpass ---------- */
 function consulta(ciudad){
   const porClave={};D.categorias.forEach(([k,v])=>(porClave[k]=porClave[k]||[]).push(v));
   const sinWeb='[!"website"][!"contact:website"][!"url"][!"brand"]';
   const bloques=Object.entries(porClave).map(([k,vs])=>`  nwr(area.a)["${k}"~"^(${[...new Set(vs)].sort().join("|")})$"]["name"]${sinWeb};`).join("\n");
-  return `[out:json][timeout:120];\narea["name"="${ciudad.replace(/"/g,'\\"')}"]["boundary"="administrative"]["admin_level"="${D.config.admin_level||"8"}"]->.a;\n(\n${bloques}\n);\nout center meta;`;
+  return `[out:json][timeout:120];\narea["name"~"^${ZONAS[ciudad].regex||escRe(ZONAS[ciudad].nombre)}$",i]["boundary"="administrative"]["admin_level"="${ZONAS[ciudad].nivel}"]->.a;\n(\n${bloques}\n);\nout center meta;`;
 }
 const espera=ms=>new Promise(r=>setTimeout(r,ms));
 async function descargar(ciudad){
@@ -190,7 +194,7 @@ async function negociosDe(ciudad,fecha){
   try{localStorage.setItem("nd_cache",JSON.stringify(cache))}catch(e){try{localStorage.removeItem("nd_cache")}catch(_){}}
   return lista;
 }
-function rotacion(f){const t=D.config.ciudades,i=(ordinal(f)*Math.min(D.config.ciudades_por_dia||3,t.length))%t.length;return t.map((_,k)=>t[(i+k)%t.length])}
+function rotacion(f){const t=LISTA_ZONAS,i=(ordinal(f)*Math.min(D.config.ciudades_por_dia||3,t.length))%t.length;return t.map((_,k)=>t[(i+k)%t.length])}
 
 /* ---------- tratamiento (equivalente a buscar_negocios.py) ---------- */
 // Móviles: 6xx y 71x-74x. Fijos geográficos: 81x-88x y 91x-98x. Fuera 70x, 80x, 90x (especiales/tarificación).
@@ -333,7 +337,7 @@ document.addEventListener("click",ev=>{const t=ev.target.closest("button");if(!t
   else if(t.dataset.malo)reemplazar(t.dataset.malo);
   else if(t.dataset.e){const l=listas[diaSel].find(x=>x.id===t.dataset.id);if(l){l.estado=t.dataset.e;guardar("nd_listas",listas);render()}}
 });
-$("selCiudad").innerHTML=`<option value="auto">Zona de hoy: ${esc(ciudadesDeHoy(hoyISO()).join(", "))}</option>`+D.config.ciudades.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+$("selCiudad").innerHTML=`<option value="auto">Zona de hoy: ${esc(ciudadesDeHoy(hoyISO()).join(", "))}</option>`+LISTA_ZONAS.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
 render();
 </script>
 </body>
