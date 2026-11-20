@@ -205,10 +205,12 @@ export async function importCommunities(input: {
     if (match) {
       if (input.mode === "solo_nuevas") { results.push({ row: rowNo, status: "omitida", name: r.name, message: `Ya existe (${match.code}).` }); skipped++; continue; }
       const update = Object.fromEntries(Object.entries({ ...fields, manager_id: managerId }).filter(([, v]) => v !== undefined)) as Database["public"]["Tables"]["communities"]["Update"];
-      if (!Object.keys(update).length) { results.push({ row: rowNo, status: "omitida", name: r.name, message: "Sin datos nuevos." }); skipped++; continue; }
-      const { error } = await supabase.from("communities").update(update).eq("id", match.id);
-      if (error) { results.push({ row: rowNo, status: "error", name: r.name, message: dbError(error).error! }); skipped++; continue; }
-      results.push({ row: rowNo, status: "actualizada", name: r.name, message: managerId ? "Gestora y datos actualizados." : "Datos actualizados." });
+      if (!Object.keys(update).length && !r.parent) { results.push({ row: rowNo, status: "omitida", name: r.name, message: "Sin datos nuevos." }); skipped++; continue; }
+      if (Object.keys(update).length) {
+        const { error } = await supabase.from("communities").update(update).eq("id", match.id);
+        if (error) { results.push({ row: rowNo, status: "error", name: r.name, message: dbError(error).error! }); skipped++; continue; }
+      }
+      results.push({ row: rowNo, status: "actualizada", name: r.name, message: !Object.keys(update).length ? "" : managerId ? "Gestora y datos actualizados." : "Datos actualizados." });
       if (r.parent) pendingParents.push({ row: rowNo, name: r.name, id: match.id, parentCode: r.parent });
       updated++;
       continue;
