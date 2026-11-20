@@ -37,5 +37,6 @@
       "mantenimiento_mensual": "20 €"
     }
   },
-  "antiguedad_max_anos": 5
+  "antiguedad_max_anos": 5,
+  "antiguedad_limite_anos": 10
 }

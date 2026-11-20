@@ -161,19 +161,36 @@ function consulta(ciudad){
   const bloques=Object.entries(porClave).map(([k,vs])=>`  nwr(area.a)["${k}"~"^(${[...new Set(vs)].sort().join("|")})$"]["name"]${sinWeb};`).join("\n");
   return `[out:json][timeout:120];\narea["name"="${ciudad.replace(/"/g,'\\"')}"]["boundary"="administrative"]["admin_level"="${D.config.admin_level||"8"}"]->.a;\n(\n${bloques}\n);\nout center meta;`;
 }
+const espera=ms=>new Promise(r=>setTimeout(r,ms));
 async function descargar(ciudad){
   let ultimo;
-  for(const url of SERVIDORES){
-    try{
-      const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),150000);
-      const r=await fetch(url,{method:"POST",body:new URLSearchParams({data:consulta(ciudad)}),signal:ctl.signal});
-      clearTimeout(t);
-      if(!r.ok)throw new Error("HTTP "+r.status);
-      return await r.json();
-    }catch(e){ultimo=e}
+  for(let intento=0;intento<2;intento++){
+    for(const url of SERVIDORES){
+      try{
+        const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),120000);
+        const r=await fetch(url,{method:"POST",body:new URLSearchParams({data:consulta(ciudad)}),signal:ctl.signal});
+        clearTimeout(t);
+        if(r.status===429||r.status===504){ultimo=new Error("saturado");continue}
+        if(!r.ok)throw new Error("HTTP "+r.status);
+        return await r.json();
+      }catch(e){ultimo=e}
+    }
+    $("estadoBusq").textContent=`El servidor del mapa está saturado; reintento ${ciudad} en unos segundos…`;
+    await espera(10000);
   }
   throw ultimo||new Error("sin respuesta");
 }
+// Resultados por ciudad guardados durante el día: «Buscar 20 más» no vuelve a descargar lo mismo.
+async function negociosDe(ciudad,fecha){
+  const cache=leer("nd_cache",{});
+  if(cache[ciudad]&&cache[ciudad].fecha===fecha)return cache[ciudad].lista;
+  const lista=extraer(await descargar(ciudad),ciudad);
+  for(const k of Object.keys(cache))if(cache[k].fecha!==fecha)delete cache[k];
+  cache[ciudad]={fecha,lista};
+  try{localStorage.setItem("nd_cache",JSON.stringify(cache))}catch(e){try{localStorage.removeItem("nd_cache")}catch(_){}}
+  return lista;
+}
+function rotacion(f){const t=D.config.ciudades,i=(ordinal(f)*Math.min(D.config.ciudades_por_dia||3,t.length))%t.length;return t.map((_,k)=>t[(i+k)%t.length])}
 
 /* ---------- tratamiento (equivalente a buscar_negocios.py) ---------- */
 // Móviles: 6xx y 71x-74x. Fijos geográficos: 81x-88x y 91x-98x. Fuera 70x, 80x, 90x (especiales/tarificación).
@@ -196,10 +213,11 @@ function extraer(osm,ciudad){
   for(const el of osm.elements||[]){
     const t=el.tags||{};const c=categoria(t);if(!c||!t.name||CERRADO(t))continue;
     const tels=telefonos(t);if(!tels.length)continue;
-    const fd=fechaDato(el),maxA=D.config.antiguedad_max_anos||5;
-    if(fd&&Number(fd.slice(0,4))<new Date().getFullYear()-maxA)continue;
+    const fd=fechaDato(el),anio=fd?Number(fd.slice(0,4)):0,ahora=new Date().getFullYear();
+    if(anio&&anio<ahora-(D.config.antiguedad_limite_anos||10))continue;
+    const antiguo=!anio||anio<ahora-(D.config.antiguedad_max_anos||5);
     out.push({id:`${el.type}/${el.id}`,nombre:t.name.trim(),categoria:c[0],grupo:c[1],ciudad,direccion:direccion(t),
-      telefono:tels[0],movil:MOVIL.test(tels[0]),actualizado:fd,instagram:instagram(t),horario:t.opening_hours||"",
+      telefono:tels[0],movil:MOVIL.test(tels[0]),actualizado:fd,antiguo,instagram:instagram(t),horario:t.opening_hours||"",
       lat:el.lat??el.center?.lat,lon:el.lon??el.center?.lon});
   }
   return out;
@@ -208,8 +226,11 @@ function barajar(a,semilla){let s=0;for(const ch of semilla)s=(s*31+ch.charCodeA
 function seleccionar(negocios,cantidad,semilla){
   const porCat={};negocios.filter(n=>!historial.has(n.id)).forEach(n=>(porCat[n.categoria]=porCat[n.categoria]||[]).push(n));
   Object.values(porCat).forEach(l=>{barajar(l,semilla);l.sort((a,b)=>((b.movil?1:0)-(a.movil?1:0))||((b.actualizado||"").slice(0,4)).localeCompare((a.actualizado||"").slice(0,4)))});
-  const orden=barajar(Object.keys(porCat),semilla+"o"),sel=[],max=D.config.max_por_categoria||3;
-  for(let r=0;r<max&&sel.length<cantidad;r++)for(const c of orden)if(porCat[c].length>r&&sel.length<cantidad)sel.push(porCat[c][r]);
+  const orden=barajar(Object.keys(porCat),semilla+"o"),sel=[],max=D.config.max_por_categoria||3,usados=new Set();
+  for(let r=0;r<max&&sel.length<cantidad;r++)for(const c of orden){const n=porCat[c].filter(x=>!x.antiguo)[r];if(n&&sel.length<cantidad){sel.push(n);usados.add(n.id)}}
+  // Relleno: el resto de candidatos, primero los de datos recientes.
+  const resto=Object.values(porCat).flat().filter(n=>!usados.has(n.id)).sort((a,b)=>(a.antiguo?1:0)-(b.antiguo?1:0)||(b.actualizado||"").localeCompare(a.actualizado||""));
+  for(const n of resto){if(sel.length>=cantidad)break;sel.push(n)}
   return sel;
 }
 function msgWA(n){const r=D.config.remitente,g=D.grupos[n.grupo];return `Hola, buenos días. Soy ${r.nombre}${r.marca?", de "+r.marca:""}; hago páginas web para negocios de ${n.ciudad}. He visto ${n.nombre} en el mapa y no he encontrado su web. Le escribo por si le interesa tener una sencilla y profesional para ${g.gancho}. Si quiere, le preparo un boceto sin compromiso para que lo vea antes de decidir nada. Si no le interesa, dígamelo y no le vuelvo a escribir. Gracias y disculpe la molestia.`}
@@ -227,17 +248,19 @@ function completar(n,i,fecha){return {...n,n:i+1,fecha,estado:"pendiente",msg_wa
 /* ---------- búsqueda ---------- */
 async function buscar(){
   const fecha=hoyISO(),zona=$("selCiudad").value;
-  const ciudades=zona==="auto"?ciudadesDeHoy(fecha):[zona];
+  const orden=zona==="auto"?rotacion(fecha):[zona],cantidad=D.config.leads_por_dia||20;
   const btn=$("btnBuscar");btn.disabled=true;$("btnTxt").textContent="Buscando…";
-  let negocios=[],fallos=[];
-  for(const c of ciudades){
-    $("estadoBusq").textContent=`Consultando el mapa de ${c}… (puede tardar hasta un minuto)`;
-    try{negocios.push(...extraer(await descargar(c),c))}catch(e){fallos.push(c)}
+  let negocios=[],fallos=[],ciudades=[],descargas=0;
+  for(const c of orden){
+    const nuevos=negocios.filter(n=>!historial.has(n.id)).length;
+    if(nuevos>=cantidad||descargas>=4)break;
+    const enCache=(leer("nd_cache",{})[c]||{}).fecha===fecha;if(!enCache)descargas++;
+    $("estadoBusq").textContent=`Buscando en ${c}… (${nuevos} encontrados; cada ciudad puede tardar hasta un minuto)`;
+    try{negocios.push(...await negociosDe(c,fecha));ciudades.push(c)}catch(e){fallos.push(c);if(fallos.length>=3)break}
   }
-  const cantidad=D.config.leads_por_dia||20;
   let sel=seleccionar(negocios,cantidad,fecha+zona+(listas[fecha]?.length||0));
   btn.disabled=false;$("btnTxt").textContent=listas[fecha]?"Buscar 20 más":"Buscar negocios de hoy";
-  if(!sel.length){$("estadoBusq").textContent=fallos.length===ciudades.length?"No se ha podido conectar con el mapa. Revisa la conexión a internet e inténtalo de nuevo en un rato.":"No quedan negocios nuevos en esa zona. Elige otra ciudad en el desplegable.";return}
+  if(!sel.length){$("estadoBusq").textContent=(!ciudades.length&&fallos.length)?"No se ha podido conectar con el mapa. Revisa la conexión a internet e inténtalo de nuevo en un rato.":(zona==="auto"?"No quedan negocios nuevos en las ciudades consultadas. Vuelve a pulsar para seguir con las siguientes ciudades.":"No quedan negocios nuevos en "+zona+". Elige otra ciudad o «Zona de hoy».");return}
   const previos=listas[fecha]||[];
   sel=sel.map((n,i)=>completar(n,previos.length+i,fecha));
   listas[fecha]=previos.concat(sel);sel.forEach(n=>historial.add(n.id));
@@ -282,7 +305,7 @@ function card(l){
   <div class="head"><div class="mono" aria-hidden="true">${esc(l.nombre.trim()[0].toUpperCase())}</div>
     <div class="who"><div class="cat">${esc(l.categoria)}</div><h2>${esc(l.nombre)}</h2></div><span class="num">#${l.n}</span></div>
   <div class="datos"><div>${esc(l.direccion)} · <strong>${esc(l.ciudad)}</strong></div>${l.horario?`<div>Horario: ${esc(l.horario)}</div>`:""}
-    <div class="tel"><a href="tel:+34${l.telefono}">${fmtTel(l.telefono)}</a><em class="pill">${l.movil?"móvil":"fijo"}</em>${l.actualizado?`<em class="pill">dato de ${l.actualizado.slice(0,4)}</em>`:""}<button class="malo" data-malo="${esc(l.id)}">Número no válido</button></div></div>
+    <div class="tel"><a href="tel:+34${l.telefono}">${fmtTel(l.telefono)}</a><em class="pill">${l.movil?"móvil":"fijo"}</em>${l.actualizado?`<em class="pill"${l.antiguo?' style="color:var(--warn)"':""}>dato de ${l.actualizado.slice(0,4)}</em>`:""}<button class="malo" data-malo="${esc(l.id)}">Número no válido</button></div></div>
   ${wa}
   <div class="links"><a href="${esc(l.verificar)}" target="_blank" rel="noopener">¿Tiene web?</a>
     <a href="${esc(l.ig_url)}" target="_blank" rel="noopener">${l.instagram?"Instagram":"Buscar Instagram"}</a>
