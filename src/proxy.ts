@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_PATHS = ["/login", "/auth/confirmar", "/auth/recuperar"];
+const PUBLIC_PATHS = ["/login", "/auth/confirmar", "/auth/recuperar", "/auth/enlace"];
 
 /** Renueva la sesión y redirige al acceso si no hay usuario autenticado. */
 export async function proxy(request: NextRequest) {

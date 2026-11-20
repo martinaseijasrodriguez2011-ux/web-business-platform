@@ -13,6 +13,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const supabase = await createClient();
 
+  // Sin parámetros: el enlace trae los tokens en el fragmento (#…), que el
+  // navegador conserva al redirigir; se procesan en /auth/enlace.
+  if (!tokenHash && !code && !searchParams.get("error")) {
+    return NextResponse.redirect(new URL("/auth/enlace", origin));
+  }
   let ok = false;
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
