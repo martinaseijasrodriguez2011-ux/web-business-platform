@@ -9,7 +9,7 @@ Plataforma interna de gestión de comunidades, incidencias, mantenimiento, presu
 | Inicio | Panel con indicadores reales, «Necesita atención», actividad reciente, gráficos interactivos y carga de trabajo del equipo (Dirección/Coordinación). Vista global o «Mi trabajo». |
 | Incidencias | Alta con código automático `AR-AAAA-NNNN`, adjuntos, 15 estados, prioridades, 17 vistas rápidas con contador, filtros combinables, ordenación, checklist con progreso, cronología inalterable, exportación a Excel. |
 | Comunidades | Comunidades generales y subcomunidades (escaleras, parking, piscina…). Listado con estado general, ficha con 7 pestañas (resumen, incidencias, presupuestos, facturas y pagos, proveedores, documentación, historial), contactos, importación desde Excel con asignación de gestora. |
-| Presupuestos | Varios por incidencia, comparativa (sin selección automática), IVA configurable calculado en servidor, autorización del presidente separada de la aprobación interna. Modalidad acordada: la gestora responsable aprueba sin límite y Dirección/Coordinación reciben aviso a partir del importe configurado (los límites individuales con autorización superior pueden activarse en Configuración). |
+| Presupuestos | Varios por incidencia, comparativa (sin selección automática), IVA configurable calculado en servidor, autorización del presidente separada de la aprobación interna. Modalidad acordada: la gestora responsable aprueba sin límite y sin avisos (Dirección autoriza cada transferencia desde la banca electrónica). En Configuración pueden activarse avisos a partir de un importe o límites individuales con autorización superior. |
 | Facturas y pagos | Registro por cualquier gestora, detección de diferencias con el presupuesto, pagos parciales o totales confirmados solo por Dirección y Coordinación. |
 | Proveedores | Directorio con especialidades, ficha con incidencias, comunidades, presupuestos aceptados/rechazados, facturas y gasto acumulado. |
 | Siniestros | Expedientes diferenciados, checklist propio, perito y visita, historial. |
@@ -85,7 +85,6 @@ Las pruebas crean usuarios y datos claramente identificados como de prueba (`@pr
 |---|---|
 | Comunidades y gestora responsable de cada una | Comunidades → Importar Excel (plantilla descargable) |
 | Correos corporativos del equipo | Configuración → Usuarios → Invitar |
-| Importe a partir del cual se avisa a Silvia y Begoña de una aprobación | Configuración → Aprobación de presupuestos (mientras no se fije, se avisa de todas) |
 | Proveedores habituales | Proveedores → Nuevo proveedor |
 | Logotipo original y colores oficiales | Configuración → Datos generales |
 | Documentos Word y Excel históricos | Pestaña Documentación de cada comunidad o incidencia |

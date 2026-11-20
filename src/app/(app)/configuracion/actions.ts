@@ -89,9 +89,11 @@ export async function saveApprovalSettings(_: ActionResult | null, fd: FormData)
   const threshold = raw === null ? null : money(fd, "approval_alert_threshold");
   if (threshold !== null && (Number.isNaN(threshold) || threshold < 0)) return { ok: false, error: "Importe de aviso no válido." };
   const supabase = await createClient();
-  const { error } = await supabase.from("app_settings").update({ approval_limits_enabled: enabled, approval_alert_threshold: threshold, updated_at: new Date().toISOString() }).eq("id", true);
+  const alerts = fd.get("approval_alerts_enabled") === "on";
+  const { error } = await supabase.from("app_settings").update({ approval_limits_enabled: enabled, approval_alerts_enabled: alerts, approval_alert_threshold: threshold, updated_at: new Date().toISOString() }).eq("id", true);
   if (error) return dbError(error);
-  return done(enabled ? "Se aplican los límites individuales." : threshold === null ? "Sin límite. Se avisará de todas las aprobaciones." : "Sin límite. Se avisará de las aprobaciones a partir del importe indicado.");
+  const mode = enabled ? "Se aplican los límites individuales." : "Sin límite.";
+  return done(`${mode} ${!alerts ? "Sin avisos de aprobación." : threshold === null ? "Se avisará de todas las aprobaciones." : "Se avisará de las aprobaciones a partir del importe indicado."}`);
 }
 
 /* ---------- Categorías ---------- */

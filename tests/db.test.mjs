@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { admin, ensureUser, login, staffId } from "./helpers.mjs";
 
 const T = Date.now().toString(36);
+const ok = (r) => { assert.ifError(r.error); return r.data; };
 let silvia, begona, eva, pilar, outsider;
 let communityId, incidentId;
 
@@ -175,7 +176,7 @@ test("Prueba 2 · dentro del límite, la gestora aprueba", async () => {
 });
 
 test("Aprobación sin límite · la gestora aprueba cualquier importe y se avisa a supervisión según el umbral", async () => {
-  await admin.from("app_settings").update({ approval_limits_enabled: false, approval_alert_threshold: 5000 }).eq("id", true);
+  await admin.from("app_settings").update({ approval_limits_enabled: false, approval_alerts_enabled: true, approval_alert_threshold: 5000 }).eq("id", true);
   await admin.from("staff").update({ approval_limit: null }).eq("short_name", "Eva");
   const mk = async (base) => (await eva.from("budgets").insert({ incident_id: incidentId, concept: `Sin límite ${base}`, base_amount: base, vat_rate: 21, status: "recibido" }).select().single()).data;
   const small = await mk(1000);  // 1.210 € < umbral → sin aviso
@@ -188,7 +189,12 @@ test("Aprobación sin límite · la gestora aprueba cualquier importe y se avisa
   const other = await mk(50);
   const r = await pilar.rpc("approve_budget", { p_budget: other.id });
   assert.ok(r.error);
-  await admin.from("app_settings").update({ approval_alert_threshold: null }).eq("id", true);
+  // Configuración acordada por el despacho: sin avisos
+  await admin.from("app_settings").update({ approval_alerts_enabled: false, approval_alert_threshold: null }).eq("id", true);
+  const silent = await mk(20000);
+  ok(await eva.rpc("approve_budget", { p_budget: silent.id }));
+  const { data: n2 } = await admin.from("notifications").select("id").eq("kind", "presupuesto_aprobado_aviso").like("link", `%${silent.id}`);
+  assert.equal(n2.length, 0, "con los avisos desactivados no se avisa");
 });
 
 let invoiceId;

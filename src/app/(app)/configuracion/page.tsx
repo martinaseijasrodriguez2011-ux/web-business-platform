@@ -94,7 +94,7 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
 
   async function Limites() {
     const [{ data: st }, { data: staff }, { data: history }] = await Promise.all([
-      supabase.from("app_settings").select("approval_limits_enabled, approval_alert_threshold").single(),
+      supabase.from("app_settings").select("approval_limits_enabled, approval_alert_threshold, approval_alerts_enabled").single(),
       supabase.from("staff").select("id, full_name, role, approval_limit, active").order("role").order("short_name"),
       supabase.from("approval_limit_history").select("*, staff:staff!approval_limit_history_staff_id_fkey(full_name), changer:staff!approval_limit_history_changed_by_fkey(full_name)").order("changed_at", { ascending: false }).limit(50),
     ]);
@@ -112,9 +112,15 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
                   <option value="true">Con límite individual: por encima, requiere autorización superior</option>
                 </Select>
               </Field>
-              <Field label="Avisar a Dirección y Coordinación a partir de (€, IVA incluido)" htmlFor="approval_alert_threshold" hint="Vacío = se avisa de todas las aprobaciones hechas por el equipo.">
-                <Input id="approval_alert_threshold" name="approval_alert_threshold" inputMode="decimal" defaultValue={st?.approval_alert_threshold ?? ""} placeholder="Pendiente de configurar" />
-              </Field>
+              <div className="space-y-2">
+                <label className="flex items-start gap-2 text-sm text-ink-2">
+                  <input type="checkbox" name="approval_alerts_enabled" defaultChecked={!!st?.approval_alerts_enabled} className="mt-1" />
+                  <span>Avisar a Dirección y Coordinación cuando el equipo apruebe un presupuesto</span>
+                </label>
+                <Field label="A partir de (€, IVA incluido)" htmlFor="approval_alert_threshold" hint="Solo si los avisos están activados. Vacío = avisar de todas las aprobaciones.">
+                  <Input id="approval_alert_threshold" name="approval_alert_threshold" inputMode="decimal" defaultValue={st?.approval_alert_threshold ?? ""} />
+                </Field>
+              </div>
             </div>
           </ActionFormInline>
         </CardBody>

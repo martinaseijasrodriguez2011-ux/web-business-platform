@@ -144,6 +144,7 @@ async function step(name, fn) {
     // Modalidad acordada: sin límite, con aviso a Dirección/Coordinación desde 1.000 €
     await silvia.goto(`${BASE}/configuracion?tab=limites`);
     await silvia.selectOption("#approval_limits_enabled", "false");
+    await silvia.locator("input[name=approval_alerts_enabled]").check();
     await silvia.fill("#approval_alert_threshold", "1000");
     await silvia.getByRole("button", { name: "Guardar" }).first().click();
     await silvia.getByText("Sin límite. Se avisará de las aprobaciones a partir del importe indicado.").waitFor();

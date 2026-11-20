@@ -135,14 +135,14 @@ isOneToOne: false
                   ]
                 },"app_settings": {
                   Row: {
-                    "app_name": string,"approval_alert_threshold": number | null,"approval_limits_enabled": boolean,"company_name": string,"currency": string,"date_format": string,"default_vat_rate": number,"due_soon_days": number,"id": boolean,"inactivity_days": number,"locale": string,"logo_path": string | null,"primary_color": string | null,"timezone": string,"updated_at": string,"updated_by": string | null
+                    "app_name": string,"approval_alert_threshold": number | null,"approval_alerts_enabled": boolean,"approval_limits_enabled": boolean,"company_name": string,"currency": string,"date_format": string,"default_vat_rate": number,"due_soon_days": number,"id": boolean,"inactivity_days": number,"locale": string,"logo_path": string | null,"primary_color": string | null,"timezone": string,"updated_at": string,"updated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "app_name"?: string,"approval_alert_threshold"?: number | null,"approval_limits_enabled"?: boolean,"company_name"?: string,"currency"?: string,"date_format"?: string,"default_vat_rate"?: number,"due_soon_days"?: number,"id"?: boolean,"inactivity_days"?: number,"locale"?: string,"logo_path"?: string | null,"primary_color"?: string | null,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
+                    "app_name"?: string,"approval_alert_threshold"?: number | null,"approval_alerts_enabled"?: boolean,"approval_limits_enabled"?: boolean,"company_name"?: string,"currency"?: string,"date_format"?: string,"default_vat_rate"?: number,"due_soon_days"?: number,"id"?: boolean,"inactivity_days"?: number,"locale"?: string,"logo_path"?: string | null,"primary_color"?: string | null,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Update: {
-                    "app_name"?: string,"approval_alert_threshold"?: number | null,"approval_limits_enabled"?: boolean,"company_name"?: string,"currency"?: string,"date_format"?: string,"default_vat_rate"?: number,"due_soon_days"?: number,"id"?: boolean,"inactivity_days"?: number,"locale"?: string,"logo_path"?: string | null,"primary_color"?: string | null,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
+                    "app_name"?: string,"approval_alert_threshold"?: number | null,"approval_alerts_enabled"?: boolean,"approval_limits_enabled"?: boolean,"company_name"?: string,"currency"?: string,"date_format"?: string,"default_vat_rate"?: number,"due_soon_days"?: number,"id"?: boolean,"inactivity_days"?: number,"locale"?: string,"logo_path"?: string | null,"primary_color"?: string | null,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Relationships: [
                     

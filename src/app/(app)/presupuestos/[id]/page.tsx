@@ -180,7 +180,7 @@ export default async function PresupuestoPage({ params }: { params: Promise<{ id
                     <>
                       {!check.has_president_authorization && <Alert tone="naranja">No consta la autorización del presidente. Verifique si es necesaria antes de aprobar.</Alert>}
                       <FormModal trigger={<><CheckCircle2 size={16} /> {check.is_supervisor && b.requires_superior ? "Conceder autorización superior" : "Aprobar presupuesto"}</>} triggerVariant="success"
-                        title="Aprobar presupuesto" description={`Total: ${euros(b.total_amount)}. La aprobación queda registrada con su nombre, fecha y hora${check.is_supervisor ? "" : " y se avisa a Dirección y Coordinación según la configuración"}.`} action={approveBudget.bind(null, id)} submitLabel="Confirmar aprobación" submitVariant="success">
+                        title="Aprobar presupuesto" description={`Total: ${euros(b.total_amount)}. La aprobación queda registrada con su nombre, fecha y hora.`} action={approveBudget.bind(null, id)} submitLabel="Confirmar aprobación" submitVariant="success">
                         <Field label="Observaciones (opcional)" htmlFor="notes"><Textarea id="notes" name="notes" rows={2} /></Field>
                       </FormModal>
                     </>
