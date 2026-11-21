@@ -145,8 +145,17 @@ GRUPOS = {
 def zona(c, admin_level: str = "8") -> dict:
     """Una zona de config.json: texto («Gavà») u objeto {nombre, regex, nivel, etiqueta}."""
     if isinstance(c, str):
+        c = {"nombre": c}
+    nombres = [c["nombre"], *c.get("otros_nombres", [])]
+    var = []
+    for n in nombres:
+        for v in (n, n[0].lower() + n[1:], n[0].upper() + n[1:]):
+            v = v.replace('"', '\\"')
+            if v not in var:
+                var.append(v)
+    if False:
         return {"nombre": c, "regex": re.escape(c).replace("\\ ", " "), "nivel": admin_level, "etiqueta": c}
-    return {"nombre": c["nombre"], "regex": c.get("regex") or re.escape(c["nombre"]).replace("\\ ", " "),
+    return {"nombre": c["nombre"], "variantes": var, "regex": "",
             "nivel": str(c.get("nivel", admin_level)), "etiqueta": c.get("etiqueta", c["nombre"])}
 
 
@@ -163,7 +172,7 @@ def construir_consulta(ciudad, admin_level: str) -> str:
     ciudad_escapada = z["regex"].replace("\\", "\\\\").replace('"', '\\"')
     return (
         "[out:json][timeout:180];\n"
-        f'area["name"~"^{ciudad_escapada}$",i]["boundary"="administrative"]["admin_level"="{z["nivel"]}"]->.a;\n'
+        "(" + "".join(f'area["name"="{n}"]["boundary"="administrative"]["admin_level"="{z["nivel"]}"];' for n in z["variantes"]) + ")->.a;\n"
         "(\n" + "\n".join(bloques) + "\n);\n"
         "out center meta;"
     )

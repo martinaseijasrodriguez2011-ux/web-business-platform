@@ -18,9 +18,11 @@
     "Vilanova i la Geltrú",
     {
       "nombre": "Sarrià - Sant Gervasi",
-      "regex": "Sarrià ?- ?Sant Gervasi",
       "nivel": "9",
-      "etiqueta": "Sarrià-Sant Gervasi"
+      "etiqueta": "Sarrià-Sant Gervasi",
+      "otros_nombres": [
+        "Sarrià-Sant Gervasi"
+      ]
     },
     "Barcelona",
     "Sant Cugat del Vallès",

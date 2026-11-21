@@ -6,7 +6,7 @@ import buscar_negocios as b
 cfg = json.load(open("config.json"))
 ciudades = [c for c in cfg["ciudades"] if (c if isinstance(c, str) else c["etiqueta"]) in
             ("Gavà", "Castelldefels", "Sabadell", "Sarrià-Sant Gervasi", "El Prat de Llobregat", "Girona")]
-for srv in b.SERVIDORES_OVERPASS[:2]:
+for srv in b.SERVIDORES_OVERPASS[:2]:  # prueba de velocidad con búsqueda por nombre exacto
     for c in ciudades[:2]:
         z = b.zona(c)
         q = b.construir_consulta(c, "8")

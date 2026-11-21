@@ -153,7 +153,9 @@ const hoyISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMo
 const ordinal=f=>{const [y,m,d]=f.split("-").map(Number);return Date.UTC(y,m-1,d)/86400000+719163};
 const fechaLarga=f=>{const d=new Date(f+"T12:00:00");return `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`};
 // Zonas: texto ("Gavà") o {nombre, nivel, etiqueta} para distritos/barrios (p. ej. Sarrià, nivel 9 en Barcelona).
-const ZONAS={};D.config.ciudades.forEach(c=>{const z=typeof c==="string"?{nombre:c}:c;ZONAS[z.etiqueta||z.nombre]={nombre:z.nombre,regex:z.regex,nivel:String(z.nivel||D.config.admin_level||"8")}});
+const ZONAS={};D.config.ciudades.forEach(c=>{const z=typeof c==="string"?{nombre:c}:c;ZONAS[z.etiqueta||z.nombre]={nombre:z.nombre,otros:z.otros_nombres||[],nivel:String(z.nivel||D.config.admin_level||"8")}});
+// Búsqueda por nombre EXACTO (rápida). Se prueban también «El/el», «L'/l'», «La/la»… porque en el mapa van en minúscula.
+function variantes(z){const v=new Set([z.nombre,...z.otros]);for(const n of [...v]){v.add(n[0].toLowerCase()+n.slice(1));v.add(n[0].toUpperCase()+n.slice(1))}return[...v]}
 const LISTA_ZONAS=Object.keys(ZONAS);
 const escRe=t=>t.replace(/[.*+?^${}()|[\]\\]/g,"\\\\$&").replace(/"/g,'\\"');
 function ciudadesDeHoy(f){const t=LISTA_ZONAS,n=Math.min(D.config.ciudades_por_dia||3,t.length),i=(ordinal(f)*n)%t.length;return Array.from({length:n},(_,k)=>t[(i+k)%t.length])}
@@ -163,7 +165,7 @@ function consulta(ciudad){
   const porClave={};D.categorias.forEach(([k,v])=>(porClave[k]=porClave[k]||[]).push(v));
   const sinWeb='[!"website"][!"contact:website"][!"url"][!"brand"]';
   const bloques=Object.entries(porClave).map(([k,vs])=>`  nwr(area.a)["${k}"~"^(${[...new Set(vs)].sort().join("|")})$"]["name"]${sinWeb};`).join("\n");
-  return `[out:json][timeout:120];\narea["name"~"^${ZONAS[ciudad].regex||escRe(ZONAS[ciudad].nombre)}$",i]["boundary"="administrative"]["admin_level"="${ZONAS[ciudad].nivel}"]->.a;\n(\n${bloques}\n);\nout center meta;`;
+  return `[out:json][timeout:120];\n(${variantes(ZONAS[ciudad]).map(n=>`area["name"="${n.replace(/"/g,'\\"')}"]["boundary"="administrative"]["admin_level"="${ZONAS[ciudad].nivel}"];`).join("")})->.a;\n(\n${bloques}\n);\nout center meta;`;
 }
 const espera=ms=>new Promise(r=>setTimeout(r,ms));
 async function descargar(ciudad){
