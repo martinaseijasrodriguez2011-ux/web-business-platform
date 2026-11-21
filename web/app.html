@@ -80,6 +80,7 @@ h2{font-family:var(--display);font-weight:600;font-size:1.3rem;line-height:1.15;
 .wa{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--wa);color:var(--wa-ink);text-decoration:none;font-weight:600;border-radius:14px;padding:13px;font-size:1rem}
 .wa svg{width:20px;height:20px;fill:currentColor}
 .wa.fijo{background:var(--ink);color:var(--bg)}
+.wa-fijo{text-align:center;color:var(--wa);font-weight:600;font-size:.86rem;text-decoration:none;margin-top:-4px}
 .links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .links a{text-align:center;text-decoration:none;color:var(--ink);background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:9px 4px;font-size:.84rem;font-weight:500}
 a:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -131,7 +132,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13.5px/1.5 var(--body);back
 
 <script>
 const D = /*__DATOS__*/null;
-const SERVIDORES = ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+const SERVIDORES = ["https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter"];
 const ESTADOS=[["pendiente","Pendiente","var(--muted)"],["contactado","Escrito","var(--accent)"],["interesado","Interesa","var(--warn)"],["no_interesa","No","var(--bad)"],["cliente","Cliente","var(--ok)"]];
 const NOMBRE_GRUPO={hosteleria:"Hostelería",alimentacion:"Alimentación",belleza:"Belleza",comercio:"Comercio",oficios:"Oficios",salud:"Salud",servicios:"Servicios"};
 const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"],MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -173,10 +174,10 @@ async function descargar(ciudad){
   for(let intento=0;intento<2;intento++){
     for(const url of SERVIDORES){
       try{
-        const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),120000);
+        const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),100000);
         const r=await fetch(url,{method:"POST",body:new URLSearchParams({data:consulta(ciudad)}),signal:ctl.signal});
         clearTimeout(t);
-        if(r.status===429||r.status===504){ultimo=new Error("saturado");continue}
+        if(r.status===429||r.status===502||r.status===503||r.status===504){ultimo=new Error("saturado");continue}
         if(!r.ok)throw new Error("HTTP "+r.status);
         return await r.json();
       }catch(e){ultimo=e}
@@ -261,7 +262,7 @@ async function buscar(){
     const nuevos=negocios.filter(n=>!historial.has(n.id)).length;
     if(nuevos>=cantidad||descargas>=4)break;
     const enCache=(leer("nd_cache",{})[c]||{}).fecha===fecha;if(!enCache)descargas++;
-    $("estadoBusq").textContent=`Buscando en ${c}… (${nuevos} encontrados; cada ciudad puede tardar hasta un minuto)`;
+    $("estadoBusq").textContent=`Buscando en ${c}… (${nuevos} encontrados; el mapa tarda 1-2 minutos por ciudad, no cierres la app)`;
     try{negocios.push(...await negociosDe(c,fecha));ciudades.push(c)}catch(e){fallos.push(c);if(fallos.length>=3)break}
   }
   let sel=seleccionar(negocios,cantidad,fecha+zona+(listas[fecha]?.length||0));
@@ -306,7 +307,7 @@ function render(){
 function bloque(t,txt,id){return `<details><summary>${t}</summary><pre id="${id}">${esc(txt)}</pre><button class="copy" data-copy="${id}">Copiar</button></details>`}
 function card(l){
   const k=l.id.replace(/\W/g,"_");
-  const wa=l.movil?`<a class="wa" href="${esc(l.whatsapp)}" target="_blank" rel="noopener">${WA_SVG}Abrir WhatsApp con el mensaje</a>`:`<a class="wa fijo" href="tel:+34${l.telefono}">Número fijo · Llamar</a>`;
+  const wa=l.movil?`<a class="wa" href="${esc(l.whatsapp)}" target="_blank" rel="noopener">${WA_SVG}Abrir WhatsApp con el mensaje</a>`:`<a class="wa fijo" href="tel:+34${l.telefono}">Llamar al ${fmtTel(l.telefono)}</a><a class="wa-fijo" href="https://wa.me/34${l.telefono}?text=${q(l.msg_wa)}" target="_blank" rel="noopener">Probar WhatsApp (algunos fijos lo tienen)</a>`;
   return `<article class="card" data-estado="${l.estado}" style="--c:var(--g-${l.grupo})">
   <div class="head"><div class="mono" aria-hidden="true">${esc(l.nombre.trim()[0].toUpperCase())}</div>
     <div class="who"><div class="cat">${esc(l.categoria)}</div><h2>${esc(l.nombre)}</h2></div><span class="num">#${l.n}</span></div>
